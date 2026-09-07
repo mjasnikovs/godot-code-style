@@ -13,17 +13,37 @@ it.
 signal enemy_died(enemy_node: Enemy)
 ```
 
-`connect` returns an `Error`, and `return_value_discarded` is an error in this style.
+**A cross-scene signal is emitted by the class that declares it.** `unused_signal`
+counts uses inside the declaring class only, so an autoload signal fired from
+elsewhere still warns. Give the autoload a method:
+
+```gdscript
+signal enemy_died(enemy_node: Enemy)
+
+
+func report_enemy_died(enemy_node: Enemy) -> void:
+	enemy_died.emit(enemy_node)
+```
+
+Callers write `Global.report_enemy_died(self)`. This is better encapsulation anyway —
+the autoload owns when its signal fires. Measured: the direct
+`Global.enemy_died.emit(self)` does not compile.
+
+`connect` returns a value, and `return_value_discarded` is an error in this style.
 Assign it to a typed `_`-prefixed throwaway, declared once per scope and reused:
 
 ```gdscript
-	var _error: Error = animation.animation_finished.connect(func(_anim: StringName) -> void:
+	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void:
 		force_state(State.idle)
 	)
 	_error = self.area_entered.connect(func(hitbox: HitBox) -> void:
 		take_hit(hitbox)
 	)
 ```
+
+**The type is `int`, not `Error`.** `connect` is declared as returning `int`, and
+annotating the throwaway as `Error` fires `int_as_enum_without_cast`. Measured against
+Godot 4.7.2.
 
 `move_and_slide()` gets the same treatment: `var _collided: bool = move_and_slide()`.
 
@@ -132,7 +152,8 @@ reaching the character it belongs to.
 
 ## 6. Assertions
 
-Every `@export` dependency is asserted in `_ready`, one message shape:
+Every `@export` **node or resource** reference is asserted in `_ready`, one message
+shape:
 
 ```gdscript
 	assert(animation, "grenade.gd - @export animation is not set in the editor on: " + self.name)
@@ -141,6 +162,11 @@ Every `@export` dependency is asserted in `_ready`, one message shape:
 Filename, then `@export <name> is not set in the editor on: `, then `self.name` (or
 `self.owner.name` for a child-node script). Class-level invariants are asserted in
 `_init` instead.
+
+Value exports are not asserted. `@export var budget: int = 10` has a default, and
+`assert(budget)` rejects a legitimate zero. Assert what can be silently null: node
+references, `PackedScene`s, and arrays that must not be empty
+(`assert(!spawn_points.is_empty(), ...)`).
 
 `self.owner.name` is safe — `Node` has a `name`. `self.owner.take_damage(...)` is not.
 See the base-class rule under scene composition below.
@@ -369,7 +395,7 @@ class_name HurtBox extends Area2D
 
 func _ready() -> void:
 	assert(character, "hurt_box.gd - @export character is not set in the editor on: " + self.name)
-	var _error: Error = self.area_entered.connect(func(hitbox: HitBox) -> void:
+	var _error: int = self.area_entered.connect(func(hitbox: HitBox) -> void:
 		if hitbox.character == character: return
 		if hitbox.character is Enemy and character is Enemy: return
 		character.take_damage(hitbox.damage, hitbox.direction)
@@ -388,17 +414,21 @@ interface is a base class with `pass` bodies, not a duck-typed call through `Nod
 `@export var weapon_scene: PackedScene` custom setter, then re-parented under the
 `directional` node.
 
-**`_on_ready()` template hook.** When a base class's `_ready` exists only to give
-subclasses a wiring point, route it through an overridable `_on_ready()` with a `pass`
+**`_setup()` template hook.** When a base class's `_ready` exists only to give
+subclasses a wiring point, route it through an overridable `_setup()` with a `pass`
 body. Use this only where a hierarchy actually needs it.
 
 ```gdscript
-func _on_ready() -> void:
+func _setup() -> void:
 	pass
 
+
 func _ready() -> void:
-	_on_ready()
+	_setup()
 ```
+
+The hook is **not** called `_on_ready`. This style bans every `func _on_*` name, and a
+hook that reads like a signal handler defeats the point of the ban.
 
 ## Script archetypes
 

@@ -51,13 +51,15 @@ Two moves are legitimate, because both change the code instead of muting the com
 - Assign an unwanted return to a typed `_`-prefixed throwaway, one per type per scope.
 
 ```gdscript
-	var _error: Error = animation.animation_finished.connect(on_finished)
+	var _error: int = animation.animation_finished.connect(on_finished)
 	_error = self.area_entered.connect(on_area_entered)
 	var _collided: bool = move_and_slide()
 ```
 
 `return_value_discarded=2` is the warning that makes this necessary. `connect` returns
-an `Error` and `move_and_slide` returns a `bool`, and you almost never want either.
+an `int` and `move_and_slide` returns a `bool`, and you almost never want either.
+Annotate the connect throwaway as `int`, not `Error` — `Error` is an enum, so it fires
+`int_as_enum_without_cast` instead. Measured against Godot 4.7.2.
 
 ## `.gdlintrc`
 
@@ -172,7 +174,9 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
 - [ ] Tabs, not spaces. Lines ≤ 120.
 - [ ] Exports grouped with `@export_category` and every one asserted in `_ready` with
       the `"<file>.gd - @export <name> is not set in the editor on: " + self.name`
-      message.
+      message. Value exports (`int`, `float`, `bool`, `String`) are not asserted.
+- [ ] Autoload signals are emitted by a method on the autoload, not from callers.
+- [ ] No function named `_on_*`. A base-class ready hook is `_setup()`.
 - [ ] Cross-scene references go through the global-state autoload. No
       `get_tree().get_root().get_node(...)` outside it.
 - [ ] Countdowns decay with `max(0, v - delta)` each frame and are guarded by

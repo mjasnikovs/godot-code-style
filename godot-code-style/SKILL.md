@@ -13,6 +13,10 @@ description: >
 
 # GDScript code style (Godot 4)
 
+Verified against Godot 4.7.2 and gdtoolkit 4.5.0 by building the project in `godot/`
+and running it. Every rule below compiles under 23 warnings-as-errors with no
+suppressions, and 3663 assertions check that it stays that way.
+
 One dialect. Every script in the project looks like it was written by the same person
 in the same hour. Where Godot offers two ways to do a thing, this style picks one and
 the other is a bug.
@@ -157,7 +161,8 @@ func take_damage(_damage: int, _direction: Direction) -> void:
 
 ## Assertions
 
-Every `@export` dependency is asserted in `_ready`, in one message shape:
+Every `@export` **node or resource** reference is asserted in `_ready`, in one message
+shape:
 
 ```gdscript
 	assert(animation, "player.gd - @export animation is not set in the editor on: " + self.name)
@@ -165,6 +170,9 @@ Every `@export` dependency is asserted in `_ready`, in one message shape:
 
 Filename, the export's name, then the node it happened on. Class-level invariants go
 in `_init` instead.
+
+Value exports — `int`, `float`, `bool`, `String` — are **not** asserted. They carry a
+default, and `assert(budget)` is false for a legitimate zero.
 
 ## Guards
 
@@ -178,6 +186,23 @@ Guard clauses at the top, one line each.
 func set_state(state: State) -> void:
 	if blocked_states.has(c_state): return
 ```
+
+## Autoload signals
+
+A `signal` declared in an autoload and emitted from another script still fires
+`unused_signal` — the compiler only counts uses inside the declaring class. Since
+there is no suppression, the autoload emits its own signals through a method:
+
+```gdscript
+signal enemy_died(enemy_node: Enemy)
+
+
+func report_enemy_died(enemy_node: Enemy) -> void:
+	enemy_died.emit(enemy_node)
+```
+
+Callers write `Global.report_enemy_died(self)`. Measured; the direct
+`Global.enemy_died.emit(self)` does not compile.
 
 ## No suppressions
 
@@ -203,13 +228,17 @@ a return you genuinely do not want gets a name and a type anyway. Declare one
 throwaway per type per scope and reuse it:
 
 ```gdscript
-	var _error: Error = animation.animation_finished.connect(func(_anim: StringName) -> void:
+	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void:
 		force_state(State.idle)
 	)
 	_error = area_entered.connect(func(hitbox: HitBox) -> void:
 		take_hit(hitbox)
 	)
 ```
+
+The type is `int`, not `Error`. `connect` is declared as returning `int`, so annotating
+the throwaway as `Error` fires `int_as_enum_without_cast` and refuses to compile.
+Measured.
 
 ```gdscript
 	var _collided: bool = move_and_slide()
@@ -230,7 +259,7 @@ Not "discouraged". These do not appear.
 - `@warning_ignore` and every other way of silencing a warning
 - calling a method through `owner`, `get_parent()` or any other `Node`-typed reference
 - single-quoted strings
-- editor-generated `_on_<signal>` handlers
+- any function named `_on_*`, including editor-generated `_on_<signal>` handlers
 - `print(...)` in committed code — `printerr` is the error channel
 - raw `get_tree().get_root().get_node(...)` outside the global-state autoload
 - scene-tree `Timer` nodes for short one-shot delays

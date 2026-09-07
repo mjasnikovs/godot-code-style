@@ -7,6 +7,9 @@ Where Godot offers two ways to do a thing, this style picks one and treats the o
 as a bug. That is the whole value: reading a file tells you nothing new about the
 author, so it can tell you something about the code.
 
+Every rule was measured against the working project in `godot/`, not copied from a
+tutorial. Four of them changed when the compiler disagreed.
+
 ## The one setting
 
 The style is not enforced by discipline. It is enforced by `project.godot`.
@@ -43,7 +46,7 @@ var jump_buffer_time: float = 0.0
 
 func _ready() -> void:
 	assert(animation, "player.gd - @export animation is not set in the editor on: " + self.name)
-	animation.animation_finished.connect(func(_anim_name: StringName) -> void:
+	var _error: int = animation.animation_finished.connect(func(_anim_name: StringName) -> void:
 		force_state(State.idle)
 	)
 ```
@@ -73,6 +76,31 @@ autoload allowed to hold scene paths.
 
 And `@warning_ignore`. There is no suppression of any kind — a warning is a value
 whose type you have not declared yet, so declare it.
+
+## Run it
+
+Needs Godot 4.7.2 or newer, and gdtoolkit 4 for the linter.
+
+```sh
+cd godot
+godot --headless --import
+godot --headless --quit-after 180            # must print nothing
+gdlint scripts/ tests/
+godot --headless tests/verify.tscn --quit-after 400   # 3663 checks, exit 0 = pass
+```
+
+All 23 GDScript warnings are set to **error**, including `untyped_declaration`,
+`inferred_declaration` and all five `unsafe_*` checks. The project refuses to run if
+one fires, and there is not a single suppression in it.
+
+## What measuring changed
+
+| Was | Is now |
+|---|---|
+| `var _error: Error = ...connect(...)` | `var _error: int` — `connect` returns `int`, so `Error` fires `int_as_enum_without_cast` |
+| every `@export` asserted in `_ready` | only node and resource exports; `assert(budget)` rejects a legitimate zero |
+| a base-class hook named `_on_ready()` | `_setup()` — the style bans every `func _on_*` name, including its own hook |
+| `Global.enemy_died.emit(self)` from a caller | `Global.report_enemy_died(self)` — `unused_signal` only counts uses inside the declaring class |
 
 ## Read it
 

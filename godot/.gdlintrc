@@ -1,0 +1,23 @@
+max-line-length: 120
+
+class-definitions-order:
+- tools
+- classnames
+- extends
+- docstrings
+- enums
+- consts
+- staticvars
+- exports
+- onreadypubvars
+- onreadyprvvars
+- pubvars
+- prvvars
+- signals
+- others
+
+constant-name: '_?([A-Z][A-Z0-9]*(_[A-Z0-9]+)*|[a-z][a-z0-9]*(_[a-z0-9]+)*)'
+load-constant-name: '_?(([A-Z][a-z0-9]*)+|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*|[a-z][a-z0-9]*(_[a-z0-9]+)*)'
+class-variable-name: '_?([a-z][a-z0-9]*(_[a-z0-9]+)*|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*)'
+function-variable-name: '_?[a-z][a-z0-9]*(_[a-z0-9]+)*'
+enum-element-name: '([a-z][a-z0-9]*(_[a-z0-9]+)*|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*)'

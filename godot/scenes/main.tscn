@@ -1,0 +1,107 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world.gd" id="0_world"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="0_player"]
+[ext_resource type="Script" path="res://scripts/magnum_weapon.gd" id="0_magnum"]
+[ext_resource type="Script" path="res://scripts/enemy_spawner.gd" id="0_spawner"]
+[ext_resource type="Script" path="res://scripts/hurt_box.gd" id="1_tbgi4"]
+[ext_resource type="Script" path="res://scripts/hit_box.gd" id="2_tefeu"]
+[ext_resource type="Script" path="res://scripts/health_bar.gd" id="3_o6xl0"]
+[ext_resource type="Script" path="res://scripts/screen_flash.gd" id="4_tipki"]
+[ext_resource type="Script" path="res://scripts/upgrade_card.gd" id="5_85g3d"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_choun"]
+size = Vector2(8, 12)
+
+[sub_resource type="Animation" id="Animation_ya4ey"]
+length = 0.4
+
+[sub_resource type="Animation" id="Animation_eb6dy"]
+length = 0.4
+loop_mode = 1
+
+[sub_resource type="Animation" id="Animation_trceg"]
+length = 0.4
+
+[sub_resource type="Animation" id="Animation_a8y0u"]
+length = 0.4
+loop_mode = 1
+
+[sub_resource type="Animation" id="Animation_jkv2x"]
+length = 0.4
+loop_mode = 1
+
+[sub_resource type="Animation" id="Animation_jbj1t"]
+length = 0.4
+loop_mode = 1
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_muem4"]
+_data = {
+&"attack": SubResource("Animation_ya4ey"),
+&"fall": SubResource("Animation_eb6dy"),
+&"hit": SubResource("Animation_trceg"),
+&"idle": SubResource("Animation_a8y0u"),
+&"jump": SubResource("Animation_jkv2x"),
+&"walk": SubResource("Animation_jbj1t")
+}
+
+[node name="Main" type="Node2D" unique_id=393259696]
+script = ExtResource("0_world")
+
+[node name="Player" type="CharacterBody2D" parent="." unique_id=2109829224 node_paths=PackedStringArray("directional", "animation")]
+script = ExtResource("0_player")
+directional = NodePath("Directional")
+animation = NodePath("AnimationPlayer")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1974417584]
+shape = SubResource("RectangleShape2D_choun")
+
+[node name="Directional" type="Node2D" parent="Player" unique_id=1207239539]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Player" unique_id=1380818051]
+libraries/ = SubResource("AnimationLibrary_muem4")
+
+[node name="HurtBox" type="Area2D" parent="Player" unique_id=1883619599 node_paths=PackedStringArray("character")]
+script = ExtResource("1_tbgi4")
+character = NodePath("..")
+
+[node name="HitBox" type="Area2D" parent="Player" unique_id=1197569747 node_paths=PackedStringArray("character")]
+script = ExtResource("2_tefeu")
+character = NodePath("..")
+
+[node name="MagnumWeapon" type="Node2D" parent="Player" unique_id=1786625812]
+script = ExtResource("0_magnum")
+
+[node name="EnemySpawner" type="Node2D" parent="." unique_id=1674825662 node_paths=PackedStringArray("spawn_points")]
+script = ExtResource("0_spawner")
+spawn_points = [NodePath("SpawnPoint")]
+
+[node name="SpawnPoint" type="Node2D" parent="EnemySpawner" unique_id=1422582876]
+
+[node name="HealthBar" type="Control" parent="." unique_id=303994040 node_paths=PackedStringArray("label")]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("3_o6xl0")
+label = NodePath("Label")
+
+[node name="Label" type="Label" parent="HealthBar" unique_id=1115074869]
+layout_mode = 0
+
+[node name="ScreenFlash" type="CanvasLayer" parent="." unique_id=1142985782 node_paths=PackedStringArray("rect")]
+script = ExtResource("4_tipki")
+rect = NodePath("ColorRect")
+
+[node name="ColorRect" type="ColorRect" parent="ScreenFlash" unique_id=1192181780]
+
+[node name="UpgradeCard" type="Control" parent="." unique_id=816823936 node_paths=PackedStringArray("title", "description")]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("5_85g3d")
+title = NodePath("Title")
+description = NodePath("Description")
+
+[node name="Title" type="Label" parent="UpgradeCard" unique_id=277754204]
+layout_mode = 0
+
+[node name="Description" type="Label" parent="UpgradeCard" unique_id=1858889559]
+layout_mode = 0
