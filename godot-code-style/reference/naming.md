@@ -207,8 +207,49 @@ No exceptions and no inference.
 
 The `project.godot` warning block that enforces this is in `checklist.md`.
 
+## Files and folders
+
+Filenames are snake_case and derive from the `class_name`: `EnemySpawner` lives in
+`enemy_spawner.gd`. Folders are snake_case, named for what is in them (`character/`,
+`items/`, `ui/`, `weapons/`), never for a layer (`scripts/managers/`).
+
+A scene and the script that drives it share a stem: `player.tscn` and `player.gd`.
+
+## Strings
+
+Double quotes, everywhere. Single quotes do not appear.
+
+Use `StringName` for anything the engine compares by name — animation names, input
+actions, node paths, group names. The literal form is `&"idle"`. It interns once and
+compares by pointer, so a per-frame comparison costs nothing.
+
+```gdscript
+	var new_anim: StringName = State.keys()[c_state]
+```
+
+Plain `String` is for text that a human reads or that you build at runtime.
+
+## Comments
+
+`#` comments explain **why** a line is the way it is. A comment that restates the code
+below it is deleted, not reworded.
+
+```gdscript
+	# Camera2D.offset is applied after the round, so it escapes the pixel grid.
+	offset = Vector2.ZERO
+```
+
+`##` doc-comments do not appear. A function that needs a docstring needs a better name
+or fewer responsibilities.
+
+Commented-out code does not get committed. Git remembers it.
+
 ## Layout
 
 - Tabs, one per nesting level. Never spaces.
 - Maximum line length 120, enforced by `.gdlintrc`.
+- **Two blank lines between functions.** One blank line between member blocks (the
+  `const` block, then the `@export` block, and so on). None inside a function unless
+  it separates two genuinely distinct steps.
+- No blank line directly after a `func` signature or before the first member.
 - Ternaries use the GDScript form: `var sign: int = 1 if value >= 0 else -1`.

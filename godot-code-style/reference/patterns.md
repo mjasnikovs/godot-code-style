@@ -13,6 +13,20 @@ it.
 signal enemy_died(enemy_node: Enemy)
 ```
 
+`connect` returns an `Error`, and `return_value_discarded` is an error in this style.
+Assign it to a typed `_`-prefixed throwaway, declared once per scope and reused:
+
+```gdscript
+	var _error: Error = animation.animation_finished.connect(func(_anim: StringName) -> void:
+		force_state(State.idle)
+	)
+	_error = self.area_entered.connect(func(hitbox: HitBox) -> void:
+		take_hit(hitbox)
+	)
+```
+
+`move_and_slide()` gets the same treatment: `var _collided: bool = move_and_slide()`.
+
 Connect with an **inline lambda**, in `_ready`. Editor-generated `_on_<signal>`
 handler methods do not appear in this style — they scatter the reaction away from the
 wiring and the editor silently owns the connection.
@@ -64,6 +78,18 @@ Two forms, no third.
 
 Never build a `Timer` just to wait inside a function that is already running.
 
+**After every `await`, the node may be gone.** The function resumes on a later frame,
+and nothing stops the scene from freeing `self` in between. Check before touching the
+tree again:
+
+```gdscript
+	await get_tree().create_timer(0.4).timeout
+	if !is_instance_valid(self): return
+```
+
+This is the crash that survives review, because it only fires when the timing lines
+up. Any `await` followed by a node access needs the guard.
+
 ## 4. The ad-hoc `Timer`
 
 For a delay that must outlive the call — a fuse, a spawn delay, a projectile
@@ -114,8 +140,10 @@ Every `@export` dependency is asserted in `_ready`, one message shape:
 
 Filename, then `@export <name> is not set in the editor on: `, then `self.name` (or
 `self.owner.name` for a child-node script). Class-level invariants are asserted in
-`_init` instead. Type the reference you are asserting on as its real class, so the
-access is safe and needs no suppression.
+`_init` instead.
+
+`self.owner.name` is safe — `Node` has a `name`. `self.owner.take_damage(...)` is not.
+See the base-class rule under scene composition below.
 
 ## 7. Config data
 
@@ -142,6 +170,32 @@ suppression is needed.
 
 Never pass `card["background"]` straight into a call. That is the `unsafe_call_argument`
 warning, and the fix is always the named local above.
+
+### The boundary rule
+
+A `Variant` travels **exactly one hop**. The blob is indexed in one function, which
+writes typed fields, and nothing else in the class ever indexes it again.
+
+```gdscript
+func apply_config(card: Dictionary) -> void:
+	var background: Background = card["background"]
+	var icon: Icon = card["icon"]
+	var title: String = card["title_label"]
+	var scene: PackedScene = card["packed_scene"]
+
+	set_background(background)
+	set_icon(icon)
+	title_label.text = title
+	weapon_scene = scene
+```
+
+Every other method reads the typed fields. If two functions index the same dictionary,
+the boundary has leaked and the class needs the extra fields.
+
+Be honest about the trade. A custom `Resource` would be typed end to end and would not
+need this function at all. It is banned because it adds a second place where game data
+lives, a `.tres` file per instance, and an editor round-trip for every change. The
+boundary function is the price of keeping data in code.
 
 Runtime look-up tables are the same idea built at load: a sound name → `AudioStream`
 dictionary, or a `State` → `Array[String]` map picked from at random.
@@ -276,7 +330,7 @@ Use the built-ins. Do not write math helpers.
 method, unreachable state.
 
 ```gdscript
-			printerr("HurtBox: " + self.owner.name + " has undefined take_damage method.")
+			printerr("Spawner: " + self.name + " ran out of spawn points with budget left.")
 ```
 
 `print(...)` is a temporary field-debugging tool and does not survive into a commit.
@@ -293,12 +347,41 @@ rotating 180°, so children keep their upright orientation.
 ```
 
 **HitBox / HurtBox pair.** Combat is two `Area2D`s. The attacker's `HitBox` deals
-damage on `area_entered`; the victim's `HurtBox` receives it and forwards to
-`self.owner.take_damage(...)`. The pair must ignore itself and same-side actors.
+damage on `area_entered`; the victim's `HurtBox` receives it and forwards it to the
+character it belongs to.
+
+That forward must **not** go through `owner`. `owner` is typed `Node`, so
+`self.owner.take_damage(...)` is `unsafe_method_access` with no legal fix. Give
+everything damageable a shared base class, and let the HurtBox hold a typed export:
 
 ```gdscript
-		if hitbox.owner is Enemy and self.owner is Enemy: return
+class_name Character extends CharacterBody2D
+
+func take_damage(damage: int, direction: Direction) -> void:
+	pass
 ```
+
+```gdscript
+class_name HurtBox extends Area2D
+
+@export var character: Character
+
+
+func _ready() -> void:
+	assert(character, "hurt_box.gd - @export character is not set in the editor on: " + self.name)
+	var _error: Error = self.area_entered.connect(func(hitbox: HitBox) -> void:
+		if hitbox.character == character: return
+		if hitbox.character is Enemy and character is Enemy: return
+		character.take_damage(hitbox.damage, hitbox.direction)
+	)
+```
+
+The base method has a `pass` body because `@abstract` is not used. The assert is what
+catches a missing wiring, so the old "owner has no take_damage method" `printerr` is
+no longer needed — the type system already knows it does.
+
+This is the general shape. Whenever a family of nodes shares an interface, the
+interface is a base class with `pass` bodies, not a duck-typed call through `Node`.
 
 **Weapon slot.** An equipping character holds a `Weapon` instantiated from an
 `@export var weapon_scene: PackedScene` custom setter, then re-parented under the

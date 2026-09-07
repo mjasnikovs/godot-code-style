@@ -108,6 +108,18 @@ Void functions write `-> void`. Loop variables are typed. Lambda parameters are 
 
 Tabs, never spaces. Lines ≤ 120 characters.
 
+## Layout
+
+- Filenames are snake_case and match the `class_name`: `enemy_spawner.gd` →
+  `EnemySpawner`. Folders are snake_case too.
+- Two blank lines between functions. One blank line between member blocks. None
+  inside a function unless it separates two distinct steps.
+- Double quotes for every string. Single quotes do not appear.
+- `StringName` for anything Godot compares by name — animation names, input actions,
+  node paths, groups. Write the literal as `&"idle"`.
+- `#` comments explain **why**, never what. A comment restating the line below it is
+  deleted. `##` doc-comments do not appear at all.
+
 ## The eight patterns
 
 These are the decisions that repeat. Full form and rationale in
@@ -124,8 +136,18 @@ These are the decisions that repeat. Full form and rationale in
 | 7 | Config data | `const Dictionary` blob, never a `Resource` subclass |
 | 8 | Branching on a state | `if` / `elif` / `else`, never `match` |
 
-Two rules ride along with them. Physics belongs in `_physics_process`; visual, UI and
-timing logic belongs in `_process`. Negation is `!`, not `not`.
+Three rules ride along with them. Physics belongs in `_physics_process`; visual, UI
+and timing logic belongs in `_process`. Negation is `!`, not `not`. And **no method is
+ever called through `owner` or `get_parent()`** — both are typed `Node`, so the call
+is unsafe by construction. Take an `@export` reference to the real class instead:
+
+```gdscript
+@export var character: Character
+```
+
+That is why a family of things that share an interface — everything that can be
+damaged, say — shares a base class. The base declares the method with a `pass` body
+and subclasses override it. `owner.name` is fine; `Node` really does have a name.
 
 ## Assertions
 
@@ -166,12 +188,29 @@ the ignorance and hides it. Fix the cause instead:
 | `unsafe_property_access` / `unsafe_method_access` | type the reference as the class you are calling into, not `Node` |
 | `unsafe_call_argument` | type the local you are passing, at its declaration |
 | `unused_signal` | delete the signal, or emit it |
-| `return_value_discarded` | assign the result, or use the call that has none |
-| `unused_parameter` | prefix it `_`, which is a rename, not a suppression |
+| `return_value_discarded` | assign it to a typed `_`-prefixed throwaway |
+| `unused_parameter` | prefix it `_` |
 
-The last row is the only escape hatch, and it changes the code rather than muting the
-compiler. If a warning cannot be fixed by typing something, the design is wrong —
-usually an untyped `Dictionary` being asked to behave like a class.
+The last two rows are the only escape hatches, and both change the code rather than
+muting the compiler. A `_`-prefixed identifier is exempt from the unused warnings, so
+a return you genuinely do not want gets a name and a type anyway. Declare one
+throwaway per type per scope and reuse it:
+
+```gdscript
+	var _error: Error = animation.animation_finished.connect(func(_anim: StringName) -> void:
+		force_state(State.idle)
+	)
+	_error = area_entered.connect(func(hitbox: HitBox) -> void:
+		take_hit(hitbox)
+	)
+```
+
+```gdscript
+	var _collided: bool = move_and_slide()
+```
+
+If a warning cannot be fixed by typing something, the design is wrong — usually a
+`Node` reference being asked to behave like a class it has not been declared as.
 
 ## Prohibited
 
@@ -183,6 +222,8 @@ Not "discouraged". These do not appear.
 - `Vector2i` — only `Vector2`
 - `##` doc-comments
 - `@warning_ignore` and every other way of silencing a warning
+- calling a method through `owner`, `get_parent()` or any other `Node`-typed reference
+- single-quoted strings
 - editor-generated `_on_<signal>` handlers
 - `print(...)` in committed code — `printerr` is the error channel
 - raw `get_tree().get_root().get_node(...)` outside the global-state autoload
