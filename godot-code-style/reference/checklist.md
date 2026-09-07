@@ -62,35 +62,63 @@ an `Error` and `move_and_slide` returns a `bool`, and you almost never want eith
 ## `.gdlintrc`
 
 The compiler checks types. `gdlint` checks names and shape, and **its defaults
-disagree with this style in three places.** A `.gdlintrc` with only a line length in
-it will fail on a correct file.
+disagree with this style in six places.** A config with only a line length in it fails
+on a correct file. Verified against gdtoolkit 4.5.0 by linting the examples in this
+guide.
 
 | gdlint default | What it rejects here |
 |---|---|
+| `enum-element-name` wants SCREAMING | `enum State {idle, walk, jump}` — 6 errors from one line |
 | `constant-name` wants UPPER_SNAKE | `const blocked_states: Array[State]`, `const magnum_1` |
-| `load-constant-name` wants its own case | `const gold: PackedScene = preload(...)` |
+| `load-constant-name` wants PascalCase or UPPER | `const gold: PackedScene = preload(...)` |
 | `class-variable-name` wants snake_case | the per-instance `var SPEED` |
+| `function-variable-name` forbids a leading `_` | the `var _error` / `var _collided` throwaways |
+| `class-definitions-order` puts signals second | this style puts them after the plain vars |
 
-So the config has to widen those three to accept both cases. Generate the baseline and
-edit it, rather than typing keys from memory — the rule names change between gdtoolkit
-releases:
+Put this at the project root as `.gdlintrc` (or `gdlintrc` — gdlint reads either):
 
-```sh
-gdlint --dump-default-config
-```
-
-That writes a `.gdlintrc` with every rule at its default. Then set:
-
-```
+```yaml
 max-line-length: 120
-constant-name: '(([A-Z][A-Z0-9]*)(_[A-Z0-9]+)*|([a-z][a-z0-9]*)(_[a-z0-9]+)*)'
-load-constant-name: '(([A-Z][A-Z0-9]*)(_[A-Z0-9]+)*|([a-z][a-z0-9]*)(_[a-z0-9]+)*)'
-class-variable-name: '(([a-z][a-z0-9]*)(_[a-z0-9]+)*|([A-Z][A-Z0-9]*)(_[A-Z0-9]+)*)'
+
+class-definitions-order:
+- tools
+- classnames
+- extends
+- docstrings
+- enums
+- consts
+- staticvars
+- exports
+- onreadypubvars
+- onreadyprvvars
+- pubvars
+- prvvars
+- signals
+- others
+
+constant-name: '_?([A-Z][A-Z0-9]*(_[A-Z0-9]+)*|[a-z][a-z0-9]*(_[a-z0-9]+)*)'
+load-constant-name: '_?(([A-Z][a-z0-9]*)+|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*|[a-z][a-z0-9]*(_[a-z0-9]+)*)'
+class-variable-name: '_?([a-z][a-z0-9]*(_[a-z0-9]+)*|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*)'
+function-variable-name: '_?[a-z][a-z0-9]*(_[a-z0-9]+)*'
+enum-element-name: '([a-z][a-z0-9]*(_[a-z0-9]+)*|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*)'
 ```
 
-Run it over the scripts directory:
+Every rule not listed keeps its default. A partial config **merges**, it does not
+replace — `trailing-whitespace`, `unnecessary-pass`, `unused-argument`,
+`max-file-lines` and the rest still fire. Verified. So do not dump the full default
+config with `gdlint -d`; this short file is the whole thing.
+
+Each of these six lines widens a rule to accept the form the style already requires.
+None of them turns a check off. The `disable:` list stays empty.
+
+### Run it from the project root
+
+`gdlint` searches for its config **upward from the current directory**, not from the
+file being linted. Run it from anywhere else and it silently uses defaults, and a
+correct file reports 18 errors.
 
 ```sh
+cd <project root>
 gdlint scripts/
 ```
 
@@ -101,6 +129,17 @@ from that declaration, and stays banned. Same line as `@warning_ignore`.
 `gdformat` is not part of this style. It splits `class_name X extends Y` onto two
 lines, among other reflows the rules above do not ask for. Format by hand and let
 `gdlint` catch the line length.
+
+### An overridable method's parameters take a `_`
+
+A base-class method with a `pass` body does not use its arguments, so both gdlint's
+`unused-argument` and Godot's `unused_parameter` fire. Name them with a leading
+underscore in the base; the overrides use real names.
+
+```gdscript
+func take_damage(_damage: int, _direction: Direction) -> void:
+	pass
+```
 
 ## Headless check
 
@@ -160,7 +199,8 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
       `StringName` (`&"idle"`) for engine name comparisons.
 - [ ] Two blank lines between functions. Comments say why, never what. No
       commented-out code.
-- [ ] `gdlint` is clean and a headless launch is silent.
+- [ ] Overridable base methods with a `pass` body take `_`-prefixed parameters.
+- [ ] `gdlint` run **from the project root** is clean, and a headless launch is silent.
 
 ## Reviewing an existing file
 

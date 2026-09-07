@@ -147,7 +147,13 @@ is unsafe by construction. Take an `@export` reference to the real class instead
 
 That is why a family of things that share an interface — everything that can be
 damaged, say — shares a base class. The base declares the method with a `pass` body
-and subclasses override it. `owner.name` is fine; `Node` really does have a name.
+and `_`-prefixed parameters, and subclasses override it. `owner.name` is fine; `Node`
+really does have a name.
+
+```gdscript
+func take_damage(_damage: int, _direction: Direction) -> void:
+	pass
+```
 
 ## Assertions
 

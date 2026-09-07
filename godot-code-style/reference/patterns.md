@@ -357,7 +357,7 @@ everything damageable a shared base class, and let the HurtBox hold a typed expo
 ```gdscript
 class_name Character extends CharacterBody2D
 
-func take_damage(damage: int, direction: Direction) -> void:
+func take_damage(_damage: int, _direction: Direction) -> void:
 	pass
 ```
 
@@ -376,7 +376,8 @@ func _ready() -> void:
 	)
 ```
 
-The base method has a `pass` body because `@abstract` is not used. The assert is what
+The base method has a `pass` body because `@abstract` is not used, and its parameters
+take a leading `_` because a `pass` body never reads them. The assert is what
 catches a missing wiring, so the old "owner has no take_damage method" `printerr` is
 no longer needed — the type system already knows it does.
 
