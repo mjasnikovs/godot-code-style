@@ -71,6 +71,9 @@ lambdas.
 in committed code, and raw `get_tree().get_root().get_node(...)` outside the one
 autoload allowed to hold scene paths.
 
+And `@warning_ignore`. There is no suppression of any kind — a warning is a value
+whose type you have not declared yet, so declare it.
+
 ## Read it
 
 - **[godot-code-style/SKILL.md](godot-code-style/SKILL.md)** — the whole style in 200

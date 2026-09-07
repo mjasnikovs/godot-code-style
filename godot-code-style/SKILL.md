@@ -5,9 +5,9 @@ description: >
   writing or reviewing any .gd script; when deciding where a member goes in a file,
   how to name it, or which of two Godot features to reach for; when a script mixes
   spaces and tabs, untyped vars, inferred types, or editor-generated _on_signal
-  handlers; when unsafe_* or untyped_declaration warnings fire. Triggers: GDScript
-  style, coding standard, class_name, @export_category, @onready, @warning_ignore,
-  typed GDScript, strict typing, gdlint, gdformat, naming convention, signal lambda,
+  handlers; when an unsafe_* or untyped_declaration warning fires, or a
+  @warning_ignore is used to silence one. Triggers: GDScript
+  style, coding standard, class_name, @export_category, @onready, typed GDScript, strict typing, gdlint, gdformat, naming convention, signal lambda,
   code review of a Godot script.
 ---
 
@@ -151,19 +151,26 @@ func set_state(state: State) -> void:
 	if blocked_states.has(c_state): return
 ```
 
-## `@warning_ignore`
+## No suppressions
 
-On the line directly above the statement that would otherwise warn. Never on the
-class, never on a whole function.
+`@warning_ignore` does not appear in this style, in any form. Neither does
+`@warning_ignore_start`, nor lowering a warning level in `project.godot`.
 
-```gdscript
-	@warning_ignore("unsafe_cast")
-	set_background(card.background as Background)
-```
+A warning is the type system telling you it lost track of a value. Silencing it keeps
+the ignorance and hides it. Fix the cause instead:
 
-The codes you will actually need: `unsafe_cast`, `unsafe_method_access`,
-`unsafe_property_access`, `unsafe_call_argument`, `unused_signal`. Several can share
-one annotation.
+| The warning | The fix |
+|---|---|
+| `unsafe_cast` | give the source an explicit type, so no cast is needed |
+| `unsafe_property_access` / `unsafe_method_access` | type the reference as the class you are calling into, not `Node` |
+| `unsafe_call_argument` | type the local you are passing, at its declaration |
+| `unused_signal` | delete the signal, or emit it |
+| `return_value_discarded` | assign the result, or use the call that has none |
+| `unused_parameter` | prefix it `_`, which is a rename, not a suppression |
+
+The last row is the only escape hatch, and it changes the code rather than muting the
+compiler. If a warning cannot be fixed by typing something, the design is wrong —
+usually an untyped `Dictionary` being asked to behave like a class.
 
 ## Prohibited
 
@@ -174,6 +181,7 @@ Not "discouraged". These do not appear.
 - custom `Resource` subclasses — config lives in `const Dictionary`
 - `Vector2i` — only `Vector2`
 - `##` doc-comments
+- `@warning_ignore` and every other way of silencing a warning
 - editor-generated `_on_<signal>` handlers
 - `print(...)` in committed code — `printerr` is the error channel
 - raw `get_tree().get_root().get_node(...)` outside the global-state autoload

@@ -5,11 +5,11 @@ ways to do the thing and mixing them makes a codebase unreadable.
 
 ## 1. Signals
 
-Declare with typed arguments. Guard a declaration nothing emits yet so it does not
-warn.
+Declare with typed arguments. A signal nothing emits is deleted, not silenced — an
+`unused_signal` warning is a dead declaration, and this style has no way to suppress
+it.
 
 ```gdscript
-@warning_ignore("unused_signal")
 signal enemy_died(enemy_node: Enemy)
 ```
 
@@ -114,7 +114,8 @@ Every `@export` dependency is asserted in `_ready`, one message shape:
 
 Filename, then `@export <name> is not set in the editor on: `, then `self.name` (or
 `self.owner.name` for a child-node script). Class-level invariants are asserted in
-`_init` instead, with `@warning_ignore("unsafe_property_access")` above the access.
+`_init` instead. Type the reference you are asserting on as its real class, so the
+access is safe and needs no suppression.
 
 ## 7. Config data
 
@@ -130,13 +131,17 @@ const magnum_1: Dictionary = {
 }
 ```
 
-A `const Dictionary` is untyped, so reading a field back needs a cast and a suppression
-directly above it:
+A dictionary value is a `Variant`. Read it into an **explicitly typed local** first,
+then use that. The declaration is where the type is asserted, so no `as` cast and no
+suppression is needed.
 
 ```gdscript
-	@warning_ignore("unsafe_cast")
-	set_background(card.background as Background)
+	var background: Background = card["background"]
+	set_background(background)
 ```
+
+Never pass `card["background"]` straight into a call. That is the `unsafe_call_argument`
+warning, and the fix is always the named local above.
 
 Runtime look-up tables are the same idea built at load: a sound name → `AudioStream`
 dictionary, or a `State` → `Array[String]` map picked from at random.

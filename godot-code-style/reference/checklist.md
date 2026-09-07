@@ -38,8 +38,13 @@ gdscript/warnings/confusable_local_usage=2
 
 The first six are the ones that make the style self-enforcing. `untyped_declaration`
 and `inferred_declaration` together outlaw both `var x = 1` and `var x := 1`. The four
-`unsafe_*` errors are why `@warning_ignore` appears at all — each suppression marks a
-place where the type system genuinely cannot follow, and is visible in review.
+`unsafe_*` errors close the gap left behind: a value that reached you as a `Variant`
+cannot be used until you have named its type.
+
+There is no suppression. `@warning_ignore` is not part of this style, and no warning is
+lowered below `2` to make a file compile. A warning that fires is a value whose type
+you have not declared yet — declare it. The one legitimate move is renaming an unused
+parameter to `_name`, which changes the code rather than muting the compiler.
 
 ## `.gdlintrc`
 
@@ -100,7 +105,9 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
 - [ ] One-shot timers are a local `Timer.new()` with `autostart` and `one_shot`.
       In-function waits use `await`.
 - [ ] Cleanup via `queue_free()`. Post-frame cross-object calls via `call_deferred`.
-- [ ] Each `@warning_ignore("<code>")` sits directly above the statement it excuses.
+- [ ] No `@warning_ignore` anywhere, and no warning lowered below `2` in
+      `project.godot`.
+- [ ] Every `Variant` out of a `Dictionary` is read into a typed local before use.
 - [ ] Static assets use `preload(...)`. Only runtime-discovered paths use `load(...)`.
 - [ ] Randomness via the global `rand*` functions, unless a separate stream is needed.
 - [ ] No `match`, inner classes, `static`, `@tool`, `Resource` subclasses, `Vector2i`,
@@ -116,9 +123,11 @@ In order, because each step makes the next one cheaper:
    the style.
 2. Scan for `var` without `:` and for `:=`. Fix those before anything else — typing a
    declaration often reveals a real bug underneath.
-3. Look for `_on_` method names and `match`. Both are mechanical rewrites.
-4. Check the member order and move blocks. Do this after the rewrites, not before.
-5. Add the missing `_ready` asserts last, once the exports have stopped moving.
+3. Delete every `@warning_ignore`. Whatever then fails to compile is the file's real
+   problem, and step 2 usually fixes most of it.
+4. Look for `_on_` method names and `match`. Both are mechanical rewrites.
+5. Check the member order and move blocks. Do this after the rewrites, not before.
+6. Add the missing `_ready` asserts last, once the exports have stopped moving.
 
 ## Scope
 
