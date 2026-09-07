@@ -105,8 +105,8 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
 - [ ] One-shot timers are a local `Timer.new()` with `autostart` and `one_shot`.
       In-function waits use `await`.
 - [ ] Cleanup via `queue_free()`. Post-frame cross-object calls via `call_deferred`.
-- [ ] No `@warning_ignore` anywhere, and no warning lowered below `2` in
-      `project.godot`.
+- [ ] No `@warning_ignore`, `@warning_ignore_start`, `# warning-ignore:` or
+      `# gdlint:ignore=` anywhere, and no warning lowered below `2` in `project.godot`.
 - [ ] Every `Variant` out of a `Dictionary` is read into a typed local before use.
 - [ ] Static assets use `preload(...)`. Only runtime-discovered paths use `load(...)`.
 - [ ] Randomness via the global `rand*` functions, unless a separate stream is needed.

@@ -154,7 +154,8 @@ func set_state(state: State) -> void:
 ## No suppressions
 
 `@warning_ignore` does not appear in this style, in any form. Neither does
-`@warning_ignore_start`, nor lowering a warning level in `project.godot`.
+`@warning_ignore_start` / `@warning_ignore_restore`, the Godot 3 `# warning-ignore:`
+comment, a `# gdlint:ignore=` comment, nor lowering a warning level in `project.godot`.
 
 A warning is the type system telling you it lost track of a value. Silencing it keeps
 the ignorance and hides it. Fix the cause instead:
