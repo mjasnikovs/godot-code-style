@@ -230,7 +230,7 @@ A scene and the script that drives it share a stem: `player.tscn` and `player.gd
 Double quotes, everywhere. Single quotes do not appear.
 
 Use `StringName` for anything the engine compares by name — animation names, input
-actions, node paths, group names. The literal form is `&"idle"`. It interns once and
+actions, group names. Node paths are not on the list, because a script never holds one. The literal form is `&"idle"`. It interns once and
 compares by pointer, so a per-frame comparison costs nothing.
 
 ```gdscript

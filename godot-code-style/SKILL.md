@@ -15,7 +15,7 @@ description: >
 
 Verified against Godot 4.7.2 and gdtoolkit 4.5.0 by building the project in `godot/`
 and running it. Every rule below compiles under 23 warnings-as-errors with no
-suppressions, and 3766 assertions check that it stays that way.
+suppressions, and 3808 assertions check that it stays that way.
 
 One dialect. Every script in the project looks like it was written by the same person
 in the same hour. Where Godot offers two ways to do a thing, this style picks one and
@@ -122,7 +122,7 @@ Tabs, never spaces. Lines ≤ 120 characters.
   inside a function unless it separates two distinct steps.
 - Double quotes for every string. Single quotes do not appear.
 - `StringName` for anything Godot compares by name — animation names, input actions,
-  node paths, groups. Write the literal as `&"idle"`.
+  groups. Write the literal as `&"idle"`. Not node paths; scripts have none.
 - `#` comments explain **why**, never what. A comment restating the line below it is
   deleted. `##` doc-comments do not appear at all.
 
@@ -286,10 +286,12 @@ Not "discouraged". These do not appear.
 - single-quoted strings
 - any function named `_on_*`, including editor-generated `_on_<signal>` handlers
 - `print(...)` in committed code — `printerr` is the error channel
-- scene paths in a script — `$Path`, `%UniqueName`, `get_node(...)`, `find_child(...)`,
-  and any `@onready` wrapping one. A placed node is reached through an `@export` slot,
-  so moving it in the editor cannot silently break a script. A node the script creates
-  itself is not affected: `instantiate()` and `.new()` return the reference directly
+- picking a node out of the tree by position — `$Path`, `%UniqueName`, `get_node(...)`,
+  `has_node(...)`, `find_child(...)`, `find_children(...)`, `get_child(i)`, a
+  `NodePath(...)` literal, and any `@onready` wrapping one. A placed node is reached
+  through an `@export` slot, so moving it in the editor cannot silently break a script.
+  Two things are untouched: `get_children()`, which picks nothing, and a node the
+  script creates, since `instantiate()` and `.new()` return the reference directly
 - `get_tree().get_root().get_node(...)`. Cross-scene owners register themselves with
   the global-state autoload in their own `_ready`
 - scene-tree `Timer` nodes for short one-shot delays

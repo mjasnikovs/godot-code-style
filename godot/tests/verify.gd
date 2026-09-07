@@ -195,7 +195,12 @@ func verify_node_access(sources: Dictionary) -> void:
 		check(!text.contains("$"), "no $ scene paths: " + file_name)
 		check(!unique_name.search(text), "no %UniqueName scene paths: " + file_name)
 		check(!text.contains("get_node("), "no get_node calls: " + file_name)
-		check(!text.contains("find_child("), "no find_child calls: " + file_name)
+		check(!text.contains("has_node("), "no has_node calls: " + file_name)
+		check(!text.contains("find_child"), "no find_child or find_children calls: " + file_name)
+		check(!text.contains("NodePath("), "no NodePath literals in a script: " + file_name)
+		# get_children() picks nothing by position and stays allowed. get_child(i) is a
+		# path with a number instead of a name.
+		check(!text.contains("get_child("), "no get_child(i) index grabs: " + file_name)
 		for line: String in text.split("\n"):
 			var trimmed: String = line.strip_edges()
 			if !trimmed.begins_with("@onready"): continue

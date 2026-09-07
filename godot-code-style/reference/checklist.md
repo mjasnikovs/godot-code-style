@@ -178,10 +178,11 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
 - [ ] Every signal is emitted from a typed method on its declaring class, never by a
       bare `emit()` from a caller. `emit` is varargs and checks nothing.
 - [ ] No function named `_on_*`. A base-class ready hook is `_setup()`.
-- [ ] No scene path anywhere in a script: no `$Path`, `%UniqueName`, `get_node(...)`,
-      `find_child(...)`, or an `@onready` wrapping one. A placed node is reached
-      through an `@export` slot. A node the script creates keeps the reference
-      `instantiate()` or `.new()` returned.
+- [ ] No node picked out of the tree by position: no `$Path`, `%UniqueName`,
+      `get_node(...)`, `has_node(...)`, `find_child(...)`, `find_children(...)`,
+      `get_child(i)`, `NodePath(...)`, or an `@onready` wrapping one. A placed node is
+      reached through an `@export` slot. A node the script creates keeps the reference
+      `instantiate()` or `.new()` returned. `get_children()` stays allowed.
 - [ ] Cross-scene references go through the global-state autoload, and each owner
       registers itself there in its own `_ready`.
 - [ ] Countdowns decay with `max(0, v - delta)` each frame and are guarded by

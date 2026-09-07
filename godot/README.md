@@ -13,7 +13,7 @@ The second command is the real gate. `project.godot` sets all 23 GDScript warnin
 level 2, which makes them errors, so a silent launch means every script in `scripts/`
 is fully typed and free of unsafe access. There are no suppressions anywhere.
 
-`tests/verify.gd` runs 3766 checks. Most of them read the scripts back as text and
+`tests/verify.gd` runs 3808 checks. Most of them read the scripts back as text and
 assert the style holds — declaration shape, member order, typing, tabs, line length,
 assert messages, no prohibited construct. The rest exercise the runtime behaviour: the
 state machine's blocked states, buffer decay, the clamping setter, the config

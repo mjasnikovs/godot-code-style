@@ -204,11 +204,22 @@ func _ready() -> void:
 **Handed in by the code that made it.** A spawner that instantiates a node keeps its
 own reference, or passes it on through a typed method or signal parameter.
 
-A script never writes a scene path. Not `$Path/To/Node`, not `%UniqueName`, not
-`get_node(...)`, not `find_child(...)`, and not an `@onready` wrapping any of them.
-A path is a copy of the scene tree pasted into a script. Move the node in the editor
-and the script breaks silently at run time, not at compile time. The `@export` slot
-and the autoload registration both survive the move.
+A script never picks a node out of the tree by where it sits. Not `$Path/To/Node`,
+not `%UniqueName`, not `get_node(...)`, not `has_node(...)`, not `find_child(...)` or
+`find_children(...)`, not `get_child(0)`, not a `NodePath(...)` literal, and not an
+`@onready` wrapping any of them. A position is a copy of the scene tree pasted into a
+script. Move the node in the editor and the script breaks silently at run time, not at
+compile time. The `@export` slot and the autoload registration both survive the move.
+
+`get_children()` is fine. Iterating every child you own picks nothing by position, so
+nothing breaks when the order changes:
+
+```gdscript
+	for child: Control in self.get_children():
+		child.visible = false
+```
+
+`get_child(0)` is not fine. It is a path with a number instead of a name.
 
 `self.owner` stays legal for a child script reaching the character it belongs to,
 for `name` and other `Node` members only. See the base-class rule below.
@@ -506,7 +517,7 @@ hook that reads like a signal handler defeats the point of the ban.
 | Kind | Shape |
 |---|---|
 | **Autoload** | no `class_name`; `extends Node`; the only holder of cross-scene node refs and cross-scene signals |
-| **UI** | `Control` subclass; typed `for` over `get_children()`; `@export` refs asserted; values decay with `max(0, ...)` |
+| **UI** | `Control` subclass; typed `for` over `get_children()`, never `get_child(i)`; `@export` refs asserted; values decay with `max(0, ...)` |
 | **Projectile** | `Area2D`; plain `var direction: int`, `damage`, `spread`, `lifetime` set externally and asserted in `_ready`; lifetime from a local one-shot `Timer` |
 | **Spawner** | `_`-prefixed private state; `@onready` index arrays derived from per-level `@export` arrays |
 | **Throwable** | `RigidBody2D`; throw plus a one-shot `Timer` fuse; `explode()` and `remove() -> void: queue_free()` |
