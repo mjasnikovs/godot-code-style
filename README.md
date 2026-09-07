@@ -59,6 +59,7 @@ lambdas.
 | # | Situation | This style |
 |---|---|---|
 | 1 | Reacting to a signal | inline `connect(func(...) -> void: ...)` — never an `_on_*` method |
+| 1b | Emitting a signal | a typed method that calls `emit` — `emit` itself is unchecked varargs |
 | 2 | A countdown | `float` seconds, `v = max(0, v - delta)` each frame |
 | 3 | A delay inside a function | `await get_tree().create_timer(d).timeout` |
 | 4 | A delay that outlives the call | local `Timer.new()`, `autostart` + `one_shot` |
@@ -100,7 +101,7 @@ one fires, and there is not a single suppression in it.
 | `var _error: Error = ...connect(...)` | `var _error: int` — `connect` returns `int`, so `Error` fires `int_as_enum_without_cast` |
 | every `@export` asserted in `_ready` | only node and resource exports; `assert(budget)` rejects a legitimate zero |
 | a base-class hook named `_on_ready()` | `_setup()` — the style bans every `func _on_*` name, including its own hook |
-| `Global.enemy_died.emit(self)` from a caller | `Global.report_enemy_died(self)` — `unused_signal` only counts uses inside the declaring class |
+| `Global.enemy_died.emit(self)` from a caller | `Global.report_enemy_died(self)` — `unused_signal` only counts uses inside the declaring class, and `emit` type-checks nothing |
 
 ## Read it
 

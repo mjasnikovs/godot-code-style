@@ -175,7 +175,8 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
 - [ ] Exports grouped with `@export_category` and every one asserted in `_ready` with
       the `"<file>.gd - @export <name> is not set in the editor on: " + self.name`
       message. Value exports (`int`, `float`, `bool`, `String`) are not asserted.
-- [ ] Autoload signals are emitted by a method on the autoload, not from callers.
+- [ ] Every signal is emitted from a typed method on its declaring class, never by a
+      bare `emit()` from a caller. `emit` is varargs and checks nothing.
 - [ ] No function named `_on_*`. A base-class ready hook is `_setup()`.
 - [ ] Cross-scene references go through the global-state autoload. No
       `get_tree().get_root().get_node(...)` outside it.

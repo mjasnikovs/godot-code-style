@@ -132,6 +132,7 @@ These are the decisions that repeat. Full form and rationale in
 | # | Situation | This style |
 |---|---|---|
 | 1 | Reacting to a signal | inline `connect(func(...) -> void: ...)` — never an `_on_*` method |
+| 1b | Emitting a signal | a typed method that calls `emit` — `emit` itself is unchecked varargs |
 | 2 | A countdown (cooldown, i-frames, buffer) | `float` seconds, `v = max(0, v - delta)` each frame, used while `v > 0` |
 | 3 | A one-shot delay inside a function | `await get_tree().create_timer(d).timeout` |
 | 4 | A one-shot delay that outlives the call | local `Timer.new()` with `autostart` + `one_shot` |
@@ -187,11 +188,20 @@ func set_state(state: State) -> void:
 	if blocked_states.has(c_state): return
 ```
 
-## Autoload signals
+## Every signal is emitted through a method
 
-A `signal` declared in an autoload and emitted from another script still fires
-`unused_signal` — the compiler only counts uses inside the declaring class. Since
-there is no suppression, the autoload emits its own signals through a method:
+**`emit()` is not type-checked.** It takes varargs, so a declared signal signature
+means nothing to the compiler. Both of these compile clean:
+
+```gdscript
+	thing_happened.emit("a string, not a Sprite2D")   # wrong type
+	thing_happened.emit()                             # wrong argument count
+```
+
+At runtime the mismatch only surfaces if a listener happens to be connected. With
+none, it is completely silent. Measured.
+
+So a signal is emitted from a typed method, and callers call that:
 
 ```gdscript
 signal enemy_died(enemy_node: Enemy)
@@ -201,8 +211,21 @@ func report_enemy_died(enemy_node: Enemy) -> void:
 	enemy_died.emit(enemy_node)
 ```
 
-Callers write `Global.report_enemy_died(self)`. Measured; the direct
-`Global.enemy_died.emit(self)` does not compile.
+Now the same mistake is a parse error:
+
+```
+Invalid argument for "report_enemy_died()" function:
+argument 1 should be "Enemy" but is "String".
+```
+
+The signal becomes a normal typed function call, which is the whole point of the
+style. One unchecked varargs hop is confined to one line in one class.
+
+For an **autoload** signal this is not optional. A signal declared in an autoload and
+emitted from another script fires `unused_signal` — the compiler only counts uses
+inside the declaring class — and there is no suppression to reach for. Callers write
+`Global.report_enemy_died(self)`. Measured; the direct `Global.enemy_died.emit(self)`
+does not compile.
 
 ## No suppressions
 

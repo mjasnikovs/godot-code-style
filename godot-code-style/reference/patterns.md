@@ -13,9 +13,36 @@ it.
 signal enemy_died(enemy_node: Enemy)
 ```
 
-**A cross-scene signal is emitted by the class that declares it.** `unused_signal`
-counts uses inside the declaring class only, so an autoload signal fired from
-elsewhere still warns. Give the autoload a method:
+### Emit through a typed method
+
+**`emit()` is varargs, so it is not type-checked.** A declared signal signature does
+nothing for the compiler. Measured against Godot 4.7.2 — both of these compile clean:
+
+```gdscript
+signal thing_happened(node: Sprite2D)
+
+
+func direct_wrong_type() -> void:
+	thing_happened.emit("a string, not a Sprite2D")
+
+
+func direct_wrong_count() -> void:
+	thing_happened.emit()
+```
+
+Runtime is barely better. The mismatch is reported only when a listener is connected,
+and then only as a non-fatal error that execution continues past:
+
+```
+ERROR: Error calling from signal 'thing_happened' to callable:
+Cannot convert argument 1 from String to Object.
+```
+
+With **no listener connected it is entirely silent** — no compile error, no runtime
+error, nothing. A signal nobody has wired up yet is exactly when you would most like
+to be told.
+
+So every signal gets a typed emitter, and callers call that:
 
 ```gdscript
 signal enemy_died(enemy_node: Enemy)
@@ -25,9 +52,21 @@ func report_enemy_died(enemy_node: Enemy) -> void:
 	enemy_died.emit(enemy_node)
 ```
 
-Callers write `Global.report_enemy_died(self)`. This is better encapsulation anyway —
-the autoload owns when its signal fires. Measured: the direct
-`Global.enemy_died.emit(self)` does not compile.
+The same mistake is now a parse error, at load, with the argument named:
+
+```
+Invalid argument for "report_enemy_died()" function:
+argument 1 should be "Enemy" but is "String".
+```
+
+One unchecked varargs hop remains, on one line, inside the class that owns the signal.
+Everything upstream of it is checked like any other call.
+
+**For an autoload signal this is mandatory, not a preference.** `unused_signal` counts
+uses inside the declaring class only, so an autoload signal emitted from elsewhere
+warns, and there is no suppression to reach for. Callers write
+`Global.report_enemy_died(self)`. Measured: the direct `Global.enemy_died.emit(self)`
+does not compile.
 
 `connect` returns a value, and `return_value_discarded` is an error in this style.
 Assign it to a typed `_`-prefixed throwaway, declared once per scope and reused:
@@ -58,8 +97,7 @@ wiring and the editor silently owns the connection.
 	)
 ```
 
-Emit with `signal_name.emit(...)`. For one-shot self-cleanup, connect the method
-directly rather than wrapping it:
+For one-shot self-cleanup, connect the method directly rather than wrapping it:
 
 ```gdscript
 	audio_player.finished.connect(audio_player.queue_free)

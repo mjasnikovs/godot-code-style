@@ -98,6 +98,35 @@ func verify_prohibited(sources: Dictionary) -> void:
 			check(!trimmed.contains(APOSTROPHE), "double-quoted strings only: " + file_name)
 
 
+# --- 2b. Signals are emitted through a typed method ---------------------------
+
+func verify_signal_emitters(sources: Dictionary) -> void:
+	for file_name: String in sources.keys():
+		var raw: String = sources[file_name]
+		var text: String = strip_noise(raw)
+
+		var declared: Array[String] = []
+		for line: String in text.split("\n"):
+			var trimmed: String = line.strip_edges()
+			if !trimmed.begins_with("signal "): continue
+			declared.append(trimmed.split(" ")[1].split("(")[0])
+
+		for signal_name: String in declared:
+			check(text.contains(signal_name + ".emit("),
+				"signal " + signal_name + " is emitted in its own class: " + file_name)
+
+		# A caller must never reach through a reference to emit.
+		for line: String in text.split("\n"):
+			var trimmed: String = line.strip_edges()
+			if !trimmed.contains(".emit("): continue
+			var target: String = trimmed.split(".emit(")[0].strip_edges()
+			check(!target.contains("."),
+				"emit is called on a local signal, not through a reference: "
+				+ file_name + " " + trimmed)
+			check(declared.has(target),
+				"emit only names a signal this class declares: " + file_name + " " + trimmed)
+
+
 # --- 3. Layout ---------------------------------------------------------------
 
 func verify_layout(sources: Dictionary) -> void:
@@ -262,6 +291,7 @@ func _ready() -> void:
 
 	verify_declarations(sources)
 	verify_prohibited(sources)
+	verify_signal_emitters(sources)
 	verify_layout(sources)
 	verify_asserts(sources)
 	verify_typing(sources)
