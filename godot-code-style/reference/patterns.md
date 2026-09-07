@@ -388,6 +388,10 @@ Use the built-ins. Do not write math helpers.
 - `max(0, v - delta)` for buffer decay.
 - `Vector2` for positions and sizes — never `Vector2i`.
 
+One vector type means no int/float conversion at any boundary. Godot's own
+APIs — `position`, `lerp`, the physics calls — are all `Vector2`. Mixing the
+two forces casts and rounding bugs.
+
 ## Error output
 
 `printerr` for genuine runtime errors: invariant violations, a missing required

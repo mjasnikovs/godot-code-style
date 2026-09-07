@@ -277,7 +277,7 @@ Not "discouraged". These do not appear.
 - `match` statements — use `if` / `elif` / `else`
 - inner classes, `static` functions, `@tool` scripts, `@abstract`, `@icon`
 - custom `Resource` subclasses — config lives in `const Dictionary`
-- `Vector2i` — only `Vector2`
+- `Vector2i` — only `Vector2`; one vector type, no int/float casts at boundaries
 - `##` doc-comments
 - `@warning_ignore` and every other way of silencing a warning
 - calling a method through `owner`, `get_parent()` or any other `Node`-typed reference
