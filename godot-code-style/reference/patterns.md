@@ -168,27 +168,43 @@ three seconds should not be visible in the scene forever.
 
 ## 5. Reaching another system
 
-Three approved ways to get a reference, in priority order.
+Two approved ways to get a reference. There is no third.
 
-**Through the global-state autoload.** One autoload holds the shared world and UI
-node references, grabbed in its own `_ready`. Everything else asks it.
+**In-scene: an `@export` node reference.** The scene author drags the node into the
+slot. Moving or renaming the node in the scene tree re-links the slot automatically.
+
+```gdscript
+@export_category("Nodes")
+@export var animation: AnimationPlayer
+@export var spider: Spider
+```
+
+**Cross-scene: the global-state autoload.** One autoload holds shared world and UI
+references. Each owner registers itself in its own `_ready`; nobody searches for it.
+
+```gdscript
+func _ready() -> void:
+	Global.register_world(self)
+```
 
 ```gdscript
 	Global.world.call_deferred("add_child", gold_instance)
 ```
 
-**`get_tree().get_root().get_node(...)`** is permitted **only** inside that autoload's
-own initialisation. Anywhere else it is a bug — it hard-codes a scene path into a
-script that has no business knowing one.
+A script never writes a scene path. Not `$Path/To/Node`, not `%UniqueName`, not
+`get_node(...)`, not `find_child(...)`, and not an `@onready` wrapping any of them.
+A path is a copy of the scene tree pasted into a script. Move the node in the editor
+and the script breaks silently at run time, not at compile time. The `@export` slot
+and the autoload registration both survive the move.
 
-```gdscript
-@onready var player: Player = get_tree().get_root().get_node("World/Player")
-```
-
-**In-scene references** via `@export` node refs, and `self.owner` for a child script
-reaching the character it belongs to.
+`self.owner` stays legal for a child script reaching the character it belongs to,
+for `name` and other `Node` members only. See the base-class rule below.
 
 ## 6. Assertions
+
+Because a node reference can only enter a script through `@export`, and an unset
+`@export` is a silent `null`, every one of them is asserted in `_ready`. This is the
+test that replaces the compile error a scene path would never have given you.
 
 Every `@export` **node or resource** reference is asserted in `_ready`, one message
 shape:

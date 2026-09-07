@@ -87,7 +87,7 @@ cd godot
 godot --headless --import
 godot --headless --quit-after 180            # must print nothing
 gdlint scripts/ tests/
-godot --headless tests/verify.tscn --quit-after 400   # 3663 checks, exit 0 = pass
+godot --headless tests/verify.tscn --quit-after 400   # 3766 checks, exit 0 = pass
 ```
 
 All 23 GDScript warnings are set to **error**, including `untyped_declaration`,

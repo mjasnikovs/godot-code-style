@@ -15,7 +15,7 @@ description: >
 
 Verified against Godot 4.7.2 and gdtoolkit 4.5.0 by building the project in `godot/`
 and running it. Every rule below compiles under 23 warnings-as-errors with no
-suppressions, and 3663 assertions check that it stays that way.
+suppressions, and 3766 assertions check that it stays that way.
 
 One dialect. Every script in the project looks like it was written by the same person
 in the same hour. Where Godot offers two ways to do a thing, this style picks one and
@@ -62,6 +62,8 @@ const JUMP_VELOCITY: float = -300.0
 @export_category("Nodes")
 @export var directional: Node2D
 @export var animation: AnimationPlayer
+
+@onready var bullet: PackedScene = preload("res://scenes/items/bullet.tscn")
 
 var c_state: State = State.idle
 var knockback_buffer_time: float = 0.0
@@ -284,7 +286,11 @@ Not "discouraged". These do not appear.
 - single-quoted strings
 - any function named `_on_*`, including editor-generated `_on_<signal>` handlers
 - `print(...)` in committed code — `printerr` is the error channel
-- raw `get_tree().get_root().get_node(...)` outside the global-state autoload
+- scene paths in a script — `$Path`, `%UniqueName`, `get_node(...)`, `find_child(...)`,
+  and any `@onready` wrapping one. Node references arrive through `@export` only, so
+  moving a node in the editor cannot silently break a script
+- `get_tree().get_root().get_node(...)`. Cross-scene owners register themselves with
+  the global-state autoload in their own `_ready`
 - scene-tree `Timer` nodes for short one-shot delays
 
 ## Build order
@@ -294,7 +300,7 @@ Not "discouraged". These do not appear.
 2. Write line 1: `class_name X extends Y`.
 3. Lay out members in the six-block order.
 4. Annotate every declaration; add `-> void` before writing the body.
-5. Assert every `@export` in `_ready`.
+5. Assert every `@export` node or resource reference in `_ready`.
 6. Wire signals as lambdas in `_ready`.
 7. Run `gdlint` and a headless launch; both must be silent.
 8. Walk the checklist before committing.

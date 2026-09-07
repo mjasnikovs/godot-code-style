@@ -182,12 +182,25 @@ func verify_typing(sources: Dictionary) -> void:
 # --- 6. Cross-scene access ---------------------------------------------------
 
 func verify_node_access(sources: Dictionary) -> void:
+	# %Name is a scene-unique path. Modulo in this style always carries spaces,
+	# so a % glued to an identifier is a path, not arithmetic.
+	var unique_name: RegEx = RegEx.create_from_string("%[A-Za-z_]")
 	for file_name: String in sources.keys():
-		var text: String = sources[file_name]
+		var raw: String = sources[file_name]
+		var text: String = strip_noise(raw)
 		check(!text.contains("get_tree().get_root().get_node"),
 			"no raw root grabs outside the autoload: " + file_name)
 		check(!text.contains("owner.take_damage") and !text.contains("get_parent().take_damage"),
 			"no method calls through a Node-typed reference: " + file_name)
+		check(!text.contains("$"), "no $ scene paths: " + file_name)
+		check(!unique_name.search(text), "no %UniqueName scene paths: " + file_name)
+		check(!text.contains("get_node("), "no get_node calls: " + file_name)
+		check(!text.contains("find_child("), "no find_child calls: " + file_name)
+		for line: String in text.split("\n"):
+			var trimmed: String = line.strip_edges()
+			if !trimmed.begins_with("@onready"): continue
+			check(trimmed.contains("preload(") or trimmed.contains(".new(") or trimmed.contains("["),
+				"@onready is a preload or a derived value, never a node grab: " + file_name + " " + trimmed)
 
 
 # --- 7. The state machine actually behaves -----------------------------------

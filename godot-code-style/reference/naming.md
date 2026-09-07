@@ -151,19 +151,29 @@ Group exports into titled editor sections by concern — `"Settings"`, `"Nodes"`
 @export var animation: AnimationPlayer
 ```
 
-Every exported node reference is asserted in `_ready`.
+Every node reference in a script is an `@export`, and every exported node reference
+is asserted in `_ready`.
 
 ## `@onready`
 
 Use it for two things:
 
-1. Setup that needs the scene tree to exist — grabbing a node, building a derived
-   index array from exported values.
+1. A value derived from other members at ready time — an index array built from
+   exported values, a `RandomNumberGenerator.new()`.
 2. A one-time load used at ready time. `@onready` + `preload()` is the sanctioned
    ready-time load form:
 
 ```gdscript
 @onready var bullet: PackedScene = preload("res://scenes/items/bullet.tscn")
+```
+
+`@onready` never grabs a node. `@onready var spider: Spider = $World/Spider` is a
+scene path in a script, and it breaks the moment the node moves. Node references
+come in through `@export` only:
+
+```gdscript
+@export_category("Nodes")
+@export var spider: Spider
 ```
 
 ## Custom setters
