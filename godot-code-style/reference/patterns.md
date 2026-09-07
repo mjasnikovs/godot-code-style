@@ -168,7 +168,17 @@ three seconds should not be visible in the scene forever.
 
 ## 5. Reaching another system
 
-Two approved ways to get a reference. There is no third.
+This section is about reaching a node you did not create. A node you create in code
+is not a lookup — `instantiate()` and `.new()` hand you the reference directly, and
+you keep it in a typed local or member. That is always allowed.
+
+```gdscript
+	var instance: Enemy = enemy.instantiate()
+	Global.world.call_deferred("add_child", instance)
+```
+
+For a node someone else placed, there are three approved ways to get a reference.
+There is no fourth.
 
 **In-scene: an `@export` node reference.** The scene author drags the node into the
 slot. Moving or renaming the node in the scene tree re-links the slot automatically.
@@ -190,6 +200,9 @@ func _ready() -> void:
 ```gdscript
 	Global.world.call_deferred("add_child", gold_instance)
 ```
+
+**Handed in by the code that made it.** A spawner that instantiates a node keeps its
+own reference, or passes it on through a typed method or signal parameter.
 
 A script never writes a scene path. Not `$Path/To/Node`, not `%UniqueName`, not
 `get_node(...)`, not `find_child(...)`, and not an `@onready` wrapping any of them.

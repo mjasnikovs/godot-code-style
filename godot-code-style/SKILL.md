@@ -287,8 +287,9 @@ Not "discouraged". These do not appear.
 - any function named `_on_*`, including editor-generated `_on_<signal>` handlers
 - `print(...)` in committed code — `printerr` is the error channel
 - scene paths in a script — `$Path`, `%UniqueName`, `get_node(...)`, `find_child(...)`,
-  and any `@onready` wrapping one. Node references arrive through `@export` only, so
-  moving a node in the editor cannot silently break a script
+  and any `@onready` wrapping one. A placed node is reached through an `@export` slot,
+  so moving it in the editor cannot silently break a script. A node the script creates
+  itself is not affected: `instantiate()` and `.new()` return the reference directly
 - `get_tree().get_root().get_node(...)`. Cross-scene owners register themselves with
   the global-state autoload in their own `_ready`
 - scene-tree `Timer` nodes for short one-shot delays

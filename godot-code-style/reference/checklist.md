@@ -179,8 +179,9 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
       bare `emit()` from a caller. `emit` is varargs and checks nothing.
 - [ ] No function named `_on_*`. A base-class ready hook is `_setup()`.
 - [ ] No scene path anywhere in a script: no `$Path`, `%UniqueName`, `get_node(...)`,
-      `find_child(...)`, or an `@onready` wrapping one. In-scene references are
-      `@export` node slots.
+      `find_child(...)`, or an `@onready` wrapping one. A placed node is reached
+      through an `@export` slot. A node the script creates keeps the reference
+      `instantiate()` or `.new()` returned.
 - [ ] Cross-scene references go through the global-state autoload, and each owner
       registers itself there in its own `_ready`.
 - [ ] Countdowns decay with `max(0, v - delta)` each frame and are guarded by
