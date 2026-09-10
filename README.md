@@ -15,6 +15,8 @@ tutorial. Four of them changed when the compiler disagreed.
 The style is not enforced by discipline. It is enforced by `project.godot`.
 
 ```ini
+[debug]
+
 gdscript/warnings/untyped_declaration=2
 gdscript/warnings/inferred_declaration=2
 gdscript/warnings/unsafe_property_access=2
@@ -23,7 +25,8 @@ gdscript/warnings/unsafe_cast=2
 gdscript/warnings/unsafe_call_argument=2
 ```
 
-Level `2` is error. `var x = 1` and `var x := 1` both refuse to run. Everything else
+The header is part of the key: through an API the name is
+`debug/gdscript/warnings/untyped_declaration`. Level `2` is error. `var x = 1` and `var x := 1` both refuse to run. Everything else
 in the guide is what a codebase looks like once that is true.
 
 ## What it looks like

@@ -36,6 +36,14 @@ gdscript/warnings/confusable_local_declaration=2
 gdscript/warnings/confusable_local_usage=2
 ```
 
+The section header is part of the key. Anything setting these through an API —
+`ProjectSettings.set_setting`, an editor plugin, an agent tool — passes the joined
+path, `debug/gdscript/warnings/untyped_declaration`, not the line as it appears under
+the header. Godot accepts any name and creates the section for it, so a write that
+drops `debug/` lands in a `[gdscript]` section, is stored, and is never read. The
+block then looks present while nothing enforces it. `godot/tests/verify.gd` checks
+all 23 at the real key, and fails on a headerless twin.
+
 The first six are the ones that make the style self-enforcing. `untyped_declaration`
 and `inferred_declaration` together outlaw both `var x = 1` and `var x := 1`. The four
 `unsafe_*` errors close the gap left behind: a value that reached you as a `Variant`

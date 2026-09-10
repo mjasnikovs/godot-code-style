@@ -2,6 +2,32 @@ class_name Verify extends Node2D
 
 const SCRIPTS_DIR: String = "res://scripts/"
 const APOSTROPHE: String = "'"
+const WARNING_PREFIX: String = "debug/gdscript/warnings/"
+const WARNINGS: Array[String] = [
+	"untyped_declaration",
+	"inferred_declaration",
+	"unsafe_property_access",
+	"unsafe_method_access",
+	"unsafe_cast",
+	"unsafe_call_argument",
+	"unsafe_void_return",
+	"unused_variable",
+	"unused_parameter",
+	"unused_signal",
+	"shadowed_variable",
+	"standalone_expression",
+	"return_value_discarded",
+	"static_called_on_instance",
+	"redundant_await",
+	"assert_always_true",
+	"assert_always_false",
+	"integer_division",
+	"narrowing_conversion",
+	"int_as_enum_without_cast",
+	"confusable_identifier",
+	"confusable_local_declaration",
+	"confusable_local_usage"
+]
 
 var checks: int = 0
 var failures: int = 0
@@ -303,6 +329,21 @@ func verify_preloads() -> void:
 	check(EnemySpawner.enemy is PackedScene, "a spawner preload const is a PackedScene")
 
 
+# --- 13. the warning block ----------------------------------------------------
+
+# The section header is part of the key. `gdscript/warnings/x` under `[gdscript]`
+# is a setting Godot accepts, stores and never reads, so the block reads as present
+# while nothing enforces it.
+func verify_warning_settings() -> void:
+	for name: String in WARNINGS:
+		var key: String = WARNING_PREFIX + name
+		check(ProjectSettings.has_setting(key), "warning is set at its real key: " + key)
+		var level: int = ProjectSettings.get_setting(key, 0)
+		check(level == 2, "warning is an error, not a warning: " + key)
+		check(!ProjectSettings.has_setting("gdscript/warnings/" + name),
+			"no headerless twin of the warning: " + name)
+
+
 func _ready() -> void:
 	var sources: Dictionary = read_scripts()
 	check(sources.size() >= 10, "the verification project has scripts to check")
@@ -320,6 +361,7 @@ func _ready() -> void:
 	verify_config_boundary()
 	verify_setter()
 	verify_preloads()
+	verify_warning_settings()
 
 	print("checks run: " + str(checks))
 	if failures > 0:
