@@ -277,7 +277,7 @@ If a warning cannot be fixed by typing something, the design is wrong — usuall
 Not "discouraged". These do not appear.
 
 - `match` statements — use `if` / `elif` / `else`
-- inner classes, `static` functions, `@tool` scripts, `@abstract`, `@icon`
+- inner classes, `static` functions, `@abstract`, `@icon`
 - custom `Resource` subclasses — config lives in `const Dictionary`
 - `Vector2i` — only `Vector2`; one vector type, no int/float casts at boundaries
 - `##` doc-comments
@@ -295,6 +295,28 @@ Not "discouraged". These do not appear.
 - `get_tree().get_root().get_node(...)`. Cross-scene owners register themselves with
   the global-state autoload in their own `_ready`
 - scene-tree `Timer` nodes for short one-shot delays
+
+## Needs approval
+
+`@tool` is discouraged. A script gets it only after the user approves it for that
+script. Ask first, and say what the editor gains from running the code.
+
+A `@tool` script runs inside the editor as well as the game:
+
+- What it changes in a scene saves with the scene. There is no undo.
+- `queue_free()` deletes the node from the scene for good. Freeing the scene root
+  crashes the editor.
+- It spreads. Every script it calls must be `@tool` too. The editor exposes only the
+  constants and static methods of a non-tool script, and this style has no statics.
+- A subclass drops tool mode unless it repeats `@tool`.
+- A bug in it crashes or freezes the editor, not just the game.
+
+An approved script puts `@tool` on its own line above the declaration. Every
+game-only function opens with a guard:
+
+```gdscript
+	if Engine.is_editor_hint(): return
+```
 
 ## Build order
 

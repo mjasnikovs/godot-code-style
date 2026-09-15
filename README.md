@@ -73,10 +73,13 @@ lambdas.
 
 ## What it forbids
 
-`match`, inner classes, `static` functions, `@tool`, custom `Resource` subclasses,
+`match`, inner classes, `static` functions, custom `Resource` subclasses,
 `Vector2i`, `##` doc-comments, editor-generated `_on_<signal>` handlers, `print(...)`
 in committed code, and raw `get_tree().get_root().get_node(...)` outside the one
 autoload allowed to hold scene paths.
+
+`@tool` is discouraged rather than forbidden. It runs code in the editor with no undo,
+so a script gets it only when the user approves.
 
 And `@warning_ignore`. There is no suppression of any kind — a warning is a value
 whose type you have not declared yet, so declare it.

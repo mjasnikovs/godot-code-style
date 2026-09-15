@@ -206,8 +206,10 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
 - [ ] Every `Variant` out of a `Dictionary` is read into a typed local before use.
 - [ ] Static assets use `preload(...)`. Only runtime-discovered paths use `load(...)`.
 - [ ] Randomness via the global `rand*` functions, unless a separate stream is needed.
-- [ ] No `match`, inner classes, `static`, `@tool`, `Resource` subclasses, `Vector2i`,
+- [ ] No `match`, inner classes, `static`, `Resource` subclasses, `Vector2i`,
       or `##` doc-comments.
+- [ ] No `@tool` unless the user approved it for that script. An approved one guards
+      every game-only function with `if Engine.is_editor_hint(): return`.
 - [ ] No `print(...)`. `printerr` for genuine errors.
 - [ ] No method called through `owner` or `get_parent()`. Typed `@export` reference to
       a real class instead, with a shared base class where a family needs one.
