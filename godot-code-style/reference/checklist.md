@@ -250,8 +250,8 @@ autoload. It does not register autoloads, so every script that names one fails w
 - [ ] Line 1 is `class_name <PascalCase> extends <Base>`, matching the filename.
       Autoloads omit `class_name`.
 - [ ] Members in order: `enum` → `const` → `@export`/`@onready` → `var` → `signal` →
-      `func`. Functions: `_init`, `_ready`, `_input` / `_unhandled_input`,
-      `_physics_process`, `_process`, then public, then private.
+      `func`. Functions: engine callbacks in the SKILL's order,
+      then public, then private.
 - [ ] `const` SCREAMING_SNAKE; vars and funcs snake_case; classes PascalCase; enum
       members lowercase.
 - [ ] A SCREAMING `var` exists only for a genuinely per-instance value, bounded by

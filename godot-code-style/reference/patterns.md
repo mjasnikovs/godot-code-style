@@ -150,7 +150,13 @@ up. Any `await` followed by a node access needs the guard.
 ## 4. The ad-hoc `Timer`
 
 For a delay that must outlive the call — a fuse, a spawn delay, a projectile
-lifetime — create a local `Timer`, one per delay.
+lifetime, a body that fades before it frees — create a local `Timer`, one per delay.
+
+Never an `await` in its place. A function that awaits is a coroutine, and with
+`missing_await` at 2 every caller has to await it too, which makes the caller wait
+out the delay. Measured on a 96-script project: a `die()` that awaited its death
+delay failed four call sites, and awaiting it would have held `take_damage` open
+until the body was gone.
 
 ```gdscript
 	var time: Timer = Timer.new()

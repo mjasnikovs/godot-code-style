@@ -68,8 +68,9 @@ var c_state: State = State.idle
 var knockback_buffer_time: float = 0.0
 ```
 
-Functions come after every member. Engine callbacks first, in this order: `_init`,
-`_ready`, `_input` / `_unhandled_input`, `_physics_process`, `_process`. Then the
+Functions come after every member. Engine callbacks first, in this order:
+`_init`, `_enter_tree`, `_ready`, `_input`, `_unhandled_input`, `_gui_input`,
+`_physics_process`, `_process`, `_draw`, `_notification`, `_exit_tree`. Then the
 public API, then private helpers.
 
 ## Names
