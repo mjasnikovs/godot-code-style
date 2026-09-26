@@ -4,6 +4,21 @@ const SCRIPTS_DIR: String = "res://scripts/"
 const APOSTROPHE: String = "'"
 const WARNING_PREFIX: String = "debug/gdscript/warnings/"
 const WARNINGS: Array[String] = [
+	"unassigned_variable",
+	"unassigned_variable_op_assign",
+	"unused_variable",
+	"unused_local_constant",
+	"unused_private_class_variable",
+	"unused_parameter",
+	"unused_signal",
+	"shadowed_variable",
+	"shadowed_variable_base_class",
+	"shadowed_global_identifier",
+	"unreachable_code",
+	"unreachable_pattern",
+	"standalone_expression",
+	"standalone_ternary",
+	"incompatible_ternary",
 	"untyped_declaration",
 	"inferred_declaration",
 	"unsafe_property_access",
@@ -11,22 +26,33 @@ const WARNINGS: Array[String] = [
 	"unsafe_cast",
 	"unsafe_call_argument",
 	"unsafe_void_return",
-	"unused_variable",
-	"unused_parameter",
-	"unused_signal",
-	"shadowed_variable",
-	"standalone_expression",
 	"return_value_discarded",
 	"static_called_on_instance",
+	"missing_tool",
+	"redundant_static_unload",
 	"redundant_await",
+	"missing_await",
 	"assert_always_true",
 	"assert_always_false",
 	"integer_division",
 	"narrowing_conversion",
 	"int_as_enum_without_cast",
+	"int_as_enum_without_match",
+	"enum_variable_without_default",
+	"empty_file",
+	"deprecated_keyword",
 	"confusable_identifier",
 	"confusable_local_declaration",
-	"confusable_local_usage"
+	"confusable_local_usage",
+	"confusable_capture_reassignment",
+	"confusable_temporary_modification",
+	"inference_on_variant",
+	"native_method_override",
+	"get_node_default_without_onready",
+	"onready_with_export",
+	"property_used_as_function",
+	"constant_used_as_function",
+	"function_used_as_property"
 ]
 
 var checks: int = 0
@@ -370,12 +396,15 @@ func verify_preloads() -> void:
 # is a setting Godot accepts, stores and never reads, so the block reads as present
 # while nothing enforces it.
 func verify_warning_settings() -> void:
-	for name: String in WARNINGS:
-		var key: String = WARNING_PREFIX + name
+	for warning: String in WARNINGS:
+		var key: String = WARNING_PREFIX + warning
 		check(ProjectSettings.has_setting(key), "warning is set at its real key: " + key)
 		var level: int = ProjectSettings.get_setting(key, 0)
 		check(level == 2, "warning is an error, not a warning: " + key)
-		check(!ProjectSettings.has_setting("gdscript/warnings/" + name), "no headerless twin of the warning: " + name)
+		check(
+			!ProjectSettings.has_setting("gdscript/warnings/" + warning),
+			"no headerless twin of the warning: " + warning
+		)
 
 
 func _ready() -> void:

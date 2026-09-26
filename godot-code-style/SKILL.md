@@ -14,15 +14,15 @@ description: >
 # GDScript code style (Godot 4)
 
 Verified against Godot 4.7.2 and gdtoolkit 4.5.0 by building the project in `godot/`
-and running it. Every rule below compiles under 23 warnings-as-errors with no
-suppressions, and 3971 assertions check that it stays that way.
+and running it. Every rule below compiles with all 49 warnings as errors and no
+suppressions, and 4049 assertions check that it stays that way.
 
 One dialect. Every script in the project looks like it was written by the same person
 in the same hour. Where Godot offers two ways to do a thing, this style picks one and
 the other is a bug.
 
-The style rests on one setting: **every warning that can catch an untyped or unsafe
-line is an error.** Turn that on first (`reference/checklist.md`). The rest of this
+The style rests on one setting: **every GDScript warning is an error.** All 49 of
+them. Turn that on first (`reference/checklist.md`). The rest of this
 document is what the codebase looks like once the compiler refuses anything else.
 
 ## The file

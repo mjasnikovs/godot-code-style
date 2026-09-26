@@ -11,6 +11,21 @@ will not run.
 ```ini
 [debug]
 
+gdscript/warnings/unassigned_variable=2
+gdscript/warnings/unassigned_variable_op_assign=2
+gdscript/warnings/unused_variable=2
+gdscript/warnings/unused_local_constant=2
+gdscript/warnings/unused_private_class_variable=2
+gdscript/warnings/unused_parameter=2
+gdscript/warnings/unused_signal=2
+gdscript/warnings/shadowed_variable=2
+gdscript/warnings/shadowed_variable_base_class=2
+gdscript/warnings/shadowed_global_identifier=2
+gdscript/warnings/unreachable_code=2
+gdscript/warnings/unreachable_pattern=2
+gdscript/warnings/standalone_expression=2
+gdscript/warnings/standalone_ternary=2
+gdscript/warnings/incompatible_ternary=2
 gdscript/warnings/untyped_declaration=2
 gdscript/warnings/inferred_declaration=2
 gdscript/warnings/unsafe_property_access=2
@@ -18,22 +33,33 @@ gdscript/warnings/unsafe_method_access=2
 gdscript/warnings/unsafe_cast=2
 gdscript/warnings/unsafe_call_argument=2
 gdscript/warnings/unsafe_void_return=2
-gdscript/warnings/unused_variable=2
-gdscript/warnings/unused_parameter=2
-gdscript/warnings/unused_signal=2
-gdscript/warnings/shadowed_variable=2
-gdscript/warnings/standalone_expression=2
 gdscript/warnings/return_value_discarded=2
 gdscript/warnings/static_called_on_instance=2
+gdscript/warnings/missing_tool=2
+gdscript/warnings/redundant_static_unload=2
 gdscript/warnings/redundant_await=2
+gdscript/warnings/missing_await=2
 gdscript/warnings/assert_always_true=2
 gdscript/warnings/assert_always_false=2
 gdscript/warnings/integer_division=2
 gdscript/warnings/narrowing_conversion=2
 gdscript/warnings/int_as_enum_without_cast=2
+gdscript/warnings/int_as_enum_without_match=2
+gdscript/warnings/enum_variable_without_default=2
+gdscript/warnings/empty_file=2
+gdscript/warnings/deprecated_keyword=2
 gdscript/warnings/confusable_identifier=2
 gdscript/warnings/confusable_local_declaration=2
 gdscript/warnings/confusable_local_usage=2
+gdscript/warnings/confusable_capture_reassignment=2
+gdscript/warnings/confusable_temporary_modification=2
+gdscript/warnings/inference_on_variant=2
+gdscript/warnings/native_method_override=2
+gdscript/warnings/get_node_default_without_onready=2
+gdscript/warnings/onready_with_export=2
+gdscript/warnings/property_used_as_function=2
+gdscript/warnings/constant_used_as_function=2
+gdscript/warnings/function_used_as_property=2
 ```
 
 The section header is part of the key. Anything setting these through an API —
@@ -42,11 +68,14 @@ path, `debug/gdscript/warnings/untyped_declaration`, not the line as it appears 
 the header. Godot accepts any name and creates the section for it, so a write that
 drops `debug/` lands in a `[gdscript]` section, is stored, and is never read. The
 block then looks present while nothing enforces it. `godot/tests/verify.gd` checks
-all 23 at the real key, and fails on a headerless twin.
+all 49 at the real key, and fails on a headerless twin.
 
-The first six are the ones that make the style self-enforcing. `untyped_declaration`
-and `inferred_declaration` together outlaw both `var x = 1` and `var x := 1`. The four
-`unsafe_*` errors close the gap left behind: a value that reached you as a `Variant`
+That is every warning Godot 4.7.2 has, in the order the engine lists them. Four
+ship as errors already; they are written out so the block states the whole rule.
+
+Six of them make the typing self-enforcing. `untyped_declaration` and
+`inferred_declaration` together outlaw both `var x = 1` and `var x := 1`. The four
+`unsafe_*` access and cast errors close the gap left behind: a value that reached you as a `Variant`
 cannot be used until you have named its type.
 
 There is no suppression. `@warning_ignore` is not part of this style, and no warning is
@@ -174,7 +203,7 @@ What it changes, measured on gdtoolkit 4.5.0 against this style's own project:
   wrapped with `func(...)` on its own line inside the call.
 - `class_name X extends Y` stays on one line.
 
-Its output passes `gdlint` with the config above and compiles under all 23 errors.
+Its output passes `gdlint` with the config above and compiles with all 49 as errors.
 
 ### An overridable method's parameters take a `_`
 

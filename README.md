@@ -25,6 +25,10 @@ gdscript/warnings/unsafe_cast=2
 gdscript/warnings/unsafe_call_argument=2
 ```
 
+Those six make the typing self-enforcing. The full block in
+`reference/checklist.md` sets all 49 of Godot's warnings to `2`, so nothing only
+warns.
+
 The header is part of the key: through an API the name is
 `debug/gdscript/warnings/untyped_declaration`. Level `2` is error. `var x = 1` and `var x := 1` both refuse to run. Everything else
 in the guide is what a codebase looks like once that is true.
@@ -94,10 +98,10 @@ godot --headless --import
 godot --headless --quit-after 180            # must print nothing
 gdformat --check scripts/ tests/
 gdlint scripts/ tests/
-godot --headless tests/verify.tscn --quit-after 400   # 3971 checks, exit 0 = pass
+godot --headless tests/verify.tscn --quit-after 400   # 4049 checks, exit 0 = pass
 ```
 
-23 of Godot's 49 GDScript warnings are set to **error**, including `untyped_declaration`,
+All 49 of Godot's GDScript warnings are set to **error**, including `untyped_declaration`,
 `inferred_declaration` and all five `unsafe_*` checks. The project refuses to run if
 one fires, and there is not a single suppression in it.
 
