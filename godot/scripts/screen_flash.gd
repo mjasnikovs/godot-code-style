@@ -9,6 +9,11 @@ func _ready() -> void:
 	assert(rect, "screen_flash.gd - @export rect is not set in the editor on: " + self.name)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"button_select"):
+		get_tree().quit()
+
+
 func flash() -> void:
 	if tween:
 		tween.kill()
@@ -23,8 +28,3 @@ func flash_twice() -> void:
 	if !is_instance_valid(self):
 		return
 	flash()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("button_select"):
-		get_tree().quit()

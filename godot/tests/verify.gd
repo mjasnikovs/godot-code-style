@@ -2,6 +2,8 @@ class_name Verify extends Node2D
 
 const SCRIPTS_DIR: String = "res://scripts/"
 const APOSTROPHE: String = "'"
+# gdformat rewrites a string holding a double quote into single quotes, so it is a code point.
+const DOUBLE_QUOTE: int = 34
 const WARNING_PREFIX: String = "debug/gdscript/warnings/"
 const WARNINGS: Array[String] = [
 	"unassigned_variable",
@@ -59,6 +61,33 @@ var checks: int = 0
 var failures: int = 0
 
 
+func _ready() -> void:
+	var sources: Dictionary = read_scripts()
+	check(sources.size() >= 10, "the verification project has scripts to check")
+
+	verify_declarations(sources)
+	verify_prohibited(sources)
+	verify_signal_emitters(sources)
+	verify_layout(sources)
+	verify_asserts(sources)
+	verify_typing(sources)
+	verify_node_access(sources)
+	verify_compiles(sources)
+	verify_state_machine()
+	verify_buffers()
+	verify_damage()
+	verify_config_boundary()
+	verify_setter()
+	verify_preloads()
+	verify_warning_settings()
+
+	if failures > 0:
+		printerr("FAILURES: " + str(failures) + " of " + str(checks) + " checks")
+		get_tree().quit(1)
+		return
+	get_tree().quit(0)
+
+
 func check(condition: bool, label: String) -> void:
 	checks += 1
 	if !condition:
@@ -76,7 +105,7 @@ func strip_noise(text: String) -> String:
 		var index: int = 0
 		while index < line.length():
 			var character: String = line[index]
-			if character == '"':
+			if line.unicode_at(index) == DOUBLE_QUOTE:
 				in_string = !in_string
 			elif character == "#" and !in_string:
 				break
@@ -357,7 +386,7 @@ func verify_config_boundary() -> void:
 	card.description = description
 	add_child(card)
 
-	card.apply_config(UpgradeCard.magnum_1)
+	card.apply_config(UpgradeCard.MAGNUM_1)
 	check(card.c_background == UpgradeCard.Background.blue, "a Variant reaches a typed enum field")
 	check(card.title.text == "Magnum", "a Variant reaches a typed String field")
 	check(card.weapon_scene is PackedScene, "a Variant reaches a typed PackedScene field")
@@ -384,9 +413,9 @@ func verify_setter() -> void:
 
 
 func verify_preloads() -> void:
-	check(Player.gold is PackedScene, "a preload const is a PackedScene")
-	check(MagnumWeapon.bullet is PackedScene, "a weapon preload const is a PackedScene")
-	check(EnemySpawner.enemy is PackedScene, "a spawner preload const is a PackedScene")
+	check(Player.GOLD_SCENE is PackedScene, "a preload const is a PackedScene")
+	check(MagnumWeapon.BULLET_SCENE is PackedScene, "a weapon preload const is a PackedScene")
+	check(EnemySpawner.ENEMY_SCENE is PackedScene, "a spawner preload const is a PackedScene")
 
 
 # --- 13. the warning block ----------------------------------------------------
@@ -405,32 +434,3 @@ func verify_warning_settings() -> void:
 			!ProjectSettings.has_setting("gdscript/warnings/" + warning),
 			"no headerless twin of the warning: " + warning
 		)
-
-
-func _ready() -> void:
-	var sources: Dictionary = read_scripts()
-	check(sources.size() >= 10, "the verification project has scripts to check")
-
-	verify_declarations(sources)
-	verify_prohibited(sources)
-	verify_signal_emitters(sources)
-	verify_layout(sources)
-	verify_asserts(sources)
-	verify_typing(sources)
-	verify_node_access(sources)
-	verify_compiles(sources)
-	verify_state_machine()
-	verify_buffers()
-	verify_damage()
-	verify_config_boundary()
-	verify_setter()
-	verify_preloads()
-	verify_warning_settings()
-
-	print("checks run: " + str(checks))
-	if failures > 0:
-		printerr("FAILURES: " + str(failures))
-		get_tree().quit(1)
-		return
-	print("all checks passed")
-	get_tree().quit(0)

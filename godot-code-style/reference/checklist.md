@@ -88,8 +88,8 @@ Two moves are legitimate, because both change the code instead of muting the com
 - Assign an unwanted return to a typed `_`-prefixed throwaway, one per type per scope.
 
 ```gdscript
-	var _error: int = animation.animation_finished.connect(on_finished)
-	_error = self.area_entered.connect(on_area_entered)
+	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void: force_state(State.idle))
+	_error = self.area_entered.connect(func(hitbox: HitBox) -> void: take_hit(hitbox))
 	var _collided: bool = move_and_slide()
 ```
 
@@ -101,18 +101,19 @@ Annotate the connect throwaway as `int`, not `Error` — `Error` is an enum, so 
 ## `.gdlintrc`
 
 The compiler checks types. `gdlint` checks names and shape, and **its defaults
-disagree with this style in six places.** A config with only a line length in it fails
+disagree with this style in five places.** A config with only a line length in it fails
 on a correct file. Verified against gdtoolkit 4.5.0 by linting the examples in this
 guide.
 
-| gdlint default | What it rejects here |
+| gdlint default | This style |
 |---|---|
-| `enum-element-name` wants SCREAMING | `enum State {idle, walk, jump}` — 6 errors from one line |
-| `constant-name` wants UPPER_SNAKE | `const blocked_states: Array[State]`, `const magnum_1` |
-| `load-constant-name` wants PascalCase or UPPER | `const gold: PackedScene = preload(...)` |
-| `class-variable-name` wants snake_case | the per-instance `var SPEED` |
-| `function-variable-name` forbids a leading `_` | the `var _error` / `var _collided` throwaways |
-| `class-definitions-order` puts signals second | this style puts them after the plain vars |
+| `enum-element-name` wants SCREAMING | lowercase only: `enum State { idle, walk, jump }` |
+| `load-constant-name` also accepts PascalCase | SCREAMING only: `const GOLD_SCENE: PackedScene = preload(...)` |
+| `class-variable-name` wants snake_case | also the per-instance `var SPEED` |
+| `function-variable-name` forbids a leading `_` | also the `var _error` / `var _collided` throwaways |
+| `class-definitions-order` puts signals second | signals after the plain vars |
+
+`constant-name` keeps its default, which is SCREAMING only.
 
 Put this at the project root as `.gdlintrc` (or `gdlintrc` — gdlint reads either):
 
@@ -135,11 +136,10 @@ class-definitions-order:
 - signals
 - others
 
-constant-name: '_?([A-Z][A-Z0-9]*(_[A-Z0-9]+)*|[a-z][a-z0-9]*(_[a-z0-9]+)*)'
-load-constant-name: '_?(([A-Z][a-z0-9]*)+|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*|[a-z][a-z0-9]*(_[a-z0-9]+)*)'
+load-constant-name: '_?[A-Z][A-Z0-9]*(_[A-Z0-9]+)*'
 class-variable-name: '_?([a-z][a-z0-9]*(_[a-z0-9]+)*|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*)'
 function-variable-name: '_?[a-z][a-z0-9]*(_[a-z0-9]+)*'
-enum-element-name: '([a-z][a-z0-9]*(_[a-z0-9]+)*|[A-Z][A-Z0-9]*(_[A-Z0-9]+)*)'
+enum-element-name: '[a-z][a-z0-9]*(_[a-z0-9]+)*'
 ```
 
 Every rule not listed keeps its default. A partial config **merges**, it does not
@@ -147,8 +147,9 @@ replace — `trailing-whitespace`, `unnecessary-pass`, `unused-argument`,
 `max-file-lines` and the rest still fire. Verified. So do not dump the full default
 config with `gdlint -d`; this short file is the whole thing.
 
-Each of these six lines widens a rule to accept the form the style already requires.
-None of them turns a check off. The `disable:` list stays empty.
+Two of these lines narrow a rule to the one form the style allows. Two widen a
+rule to accept a form the style requires, and the order list moves signals. None
+of them turns a check off. The `disable:` list stays empty.
 
 Three defaults decide how big things get, and the style keeps all three:
 
@@ -185,7 +186,10 @@ from that declaration, and stays banned. Same line as `@warning_ignore`.
 line_length: 120
 ```
 
-Without it `gdformat` wraps at 100, and a line this style allows gets split. A
+Without it `gdformat` wraps at 100, and a line this style allows gets split.
+`gdformat` counts a tab as four columns and `gdlint` counts it as one, so
+`gdformat` is the stricter of the two and a formatted file always passes the
+lint's length check. A
 partial config merges with the defaults, like `.gdlintrc`. Like `gdlint`, it finds
 the file by searching upward from the current directory, so run it from the
 project root.
@@ -246,7 +250,8 @@ autoload. It does not register autoloads, so every script that names one fails w
 - [ ] Line 1 is `class_name <PascalCase> extends <Base>`, matching the filename.
       Autoloads omit `class_name`.
 - [ ] Members in order: `enum` → `const` → `@export`/`@onready` → `var` → `signal` →
-      `func`.
+      `func`. Functions: `_init`, `_ready`, `_input` / `_unhandled_input`,
+      `_physics_process`, `_process`, then public, then private.
 - [ ] `const` SCREAMING_SNAKE; vars and funcs snake_case; classes PascalCase; enum
       members lowercase.
 - [ ] A SCREAMING `var` exists only for a genuinely per-instance value, bounded by
@@ -279,13 +284,14 @@ autoload. It does not register autoloads, so every script that names one fails w
       `# gdlint:ignore=` anywhere, and no warning lowered below `2` in `project.godot`.
       gdUnit4 test suites are the one exception, as the SKILL says.
 - [ ] Every `Variant` out of a `Dictionary` is read into a typed local before use.
-- [ ] Static assets use `preload(...)`. Only runtime-discovered paths use `load(...)`.
+- [ ] Static assets are `const X: T = preload(...)`. Only runtime-discovered paths use
+      `load(...)`. `@onready` never preloads.
 - [ ] Randomness via the global `rand*` functions, unless a separate stream is needed.
 - [ ] No `match`, inner classes, `static`, `Resource` subclasses, `Vector2i`,
       or `##` doc-comments.
 - [ ] No `@tool` unless the user approved it for that script. An approved one guards
       every game-only function with an `if Engine.is_editor_hint():` guard.
-- [ ] No `print(...)`. `printerr` for genuine errors.
+- [ ] No `print(...)`, tests included. `printerr` for genuine errors.
 - [ ] No method called through `owner` or `get_parent()`. Typed `@export` reference to
       a real class instead, with a shared base class where a family needs one.
 - [ ] Every `await` followed by a node access has an `is_instance_valid(self)` guard.

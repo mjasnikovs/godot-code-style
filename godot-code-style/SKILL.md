@@ -15,7 +15,7 @@ description: >
 
 Verified against Godot 4.7.2 and gdtoolkit 4.5.0 by building the project in `godot/`
 and running it. Every rule below compiles with all 49 warnings as errors and no
-suppressions, and 4049 assertions check that it stays that way.
+suppressions, and the project's self-test checks that it stays that way.
 
 One dialect. Every script in the project looks like it was written by the same person
 in the same hour. Where Godot offers two ways to do a thing, this style picks one and
@@ -56,21 +56,21 @@ Top to bottom, always:
 enum Direction { left = -1, right = 1 }
 enum State { idle, walk, jump, fall, attack, hit, death }
 
-const blocked_states: Array[State] = [State.attack, State.hit]
+const BLOCKED_STATES: Array[State] = [State.attack, State.hit]
 const JUMP_VELOCITY: float = -300.0
+const BULLET_SCENE: PackedScene = preload("res://scenes/items/bullet.tscn")
 
 @export_category("Nodes")
 @export var directional: Node2D
 @export var animation: AnimationPlayer
 
-@onready var bullet: PackedScene = preload("res://scenes/items/bullet.tscn")
-
 var c_state: State = State.idle
 var knockback_buffer_time: float = 0.0
 ```
 
-Functions come after every member. Lifecycle first (`_init`, `_ready`,
-`_physics_process` / `_process`), then public API, then private helpers.
+Functions come after every member. Engine callbacks first, in this order: `_init`,
+`_ready`, `_input` / `_unhandled_input`, `_physics_process`, `_process`. Then the
+public API, then private helpers.
 
 ## Names
 
@@ -103,10 +103,10 @@ var SPEED: float = randf_range(MIN_SPEED, MAX_SPEED)
 Everything is annotated. No `:=`, no bare `var`.
 
 ```gdscript
-func take_damage(damage: int, direction: Direction) -> void:
-	var weapon: Weapon = value.instantiate()
-	for i: int in range(5):
-		pass
+func arm(weapon_scene: PackedScene, count: int) -> void:
+	for _i: int in range(count):
+		var weapon: Weapon = weapon_scene.instantiate()
+		add_child(weapon)
 ```
 
 Void functions write `-> void`. Loop variables are typed. Lambda parameters are typed:
@@ -190,7 +190,7 @@ Guard clauses at the top. `gdformat` puts the `return` on its own line.
 
 ```gdscript
 func set_state(state: State) -> void:
-	if blocked_states.has(c_state):
+	if BLOCKED_STATES.has(c_state):
 		return
 ```
 
@@ -200,8 +200,8 @@ func set_state(state: State) -> void:
 means nothing to the compiler. Both of these compile clean:
 
 ```gdscript
-	thing_happened.emit("a string, not a Sprite2D")   # wrong type
-	thing_happened.emit()                             # wrong argument count
+	thing_happened.emit("a string, not a Sprite2D")  # wrong type
+	thing_happened.emit()  # wrong argument count
 ```
 
 At runtime the mismatch only surfaces if a listener happens to be connected. With
@@ -245,6 +245,11 @@ may open with `@warning_ignore_start("return_value_discarded")` and
 `@warning_ignore_start("redundant_await")`, and nothing else file-wide. The
 `godot-gdunit4` skill has the two one-line cases it also allows. Game code gets
 none of it.
+
+Everything else in this style holds in test suites too. Two more gdUnit4 needs are
+allowed: a fuzzer parameter keeps `:=`, and a test reaches a node of the scene
+under test with `runner.find_child(...)`. A suite omits `class_name`; gdUnit4
+finds it by path. `print` stays out: a failed assert is the report.
 
 A warning is the type system telling you it lost track of a value. Silencing it keeps
 the ignorance and hides it. Fix the cause instead:

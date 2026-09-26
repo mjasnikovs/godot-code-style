@@ -95,10 +95,10 @@ wiring and the editor silently owns the connection.
 	)
 ```
 
-For one-shot self-cleanup, connect the method directly rather than wrapping it:
+One-shot self-cleanup is a lambda too, so every connection reads the same way:
 
 ```gdscript
-	_error = audio_player.finished.connect(audio_player.queue_free)
+	_error = audio_player.finished.connect(func() -> void: audio_player.queue_free())
 ```
 
 ## 2. The buffer / decay pattern
@@ -255,7 +255,7 @@ Look-up and config data lives in plain `Dictionary` members and `const Dictionar
 blobs. Custom `Resource` subclasses are not used.
 
 ```gdscript
-const magnum_1: Dictionary = {
+const MAGNUM_1: Dictionary = {
 	"background": Background.blue,
 	"icon": Icon.bow,
 	"title_label": "Magnum",
@@ -305,7 +305,8 @@ Runtime look-up tables are the same idea built at load: a sound name → `AudioS
 dictionary, or a `State` → `Array[String]` map picked from at random.
 
 ```gdscript
-	sfx[c_state][randi() % sfx[c_state].size()]
+	var sounds: Array[AudioStream] = sfx[c_state]
+	var sound: AudioStream = sounds[randi() % sounds.size()]
 ```
 
 ## 8. Branching
@@ -320,14 +321,14 @@ negation is `!`. `gdformat` puts each `return` on its own line.
 
 ```gdscript
 func set_state(state: State) -> void:
-	if blocked_states.has(c_state):
+	if BLOCKED_STATES.has(c_state):
 		return
 ```
 
-An idempotency clause is the allowed second form of that guard:
+A guard may also refuse a change to the state it already holds:
 
 ```gdscript
-	if blocked_states.has(c_state) or state == c_state:
+	if BLOCKED_STATES.has(c_state) or state == c_state:
 		return
 ```
 
@@ -377,7 +378,7 @@ Read actions by name. Keep the action set small and named after the physical con
 so the binding can change without touching code.
 
 ```gdscript
-	if Input.is_action_just_pressed("button_a"):
+	if Input.is_action_just_pressed(&"button_a"):
 ```
 
 In-scene, per-frame input is read inside the process loop. Global and menu-level input
@@ -385,7 +386,7 @@ goes through overrides instead: `_unhandled_input` for application-wide controls
 `_input` on a screen script for that screen's navigation.
 
 ```gdscript
-	if event.is_action_pressed("button_select"):
+	if event.is_action_pressed(&"button_select"):
 		get_tree().quit()
 ```
 
@@ -413,7 +414,7 @@ func remove() -> void:
 ```
 
 ```gdscript
-	_error = audio_player.finished.connect(audio_player.queue_free)
+	_error = audio_player.finished.connect(func() -> void: audio_player.queue_free())
 ```
 
 ## Tweens
@@ -437,8 +438,8 @@ its replacement. To wait for a tween, `await` its `.finished`.
 
 ## `preload` vs `load`
 
-- `preload(...)` for anything known at compile time: `const PackedScene`, `FontFile`,
-  and `@onready` one-time loads.
+- `preload(...)` for anything known at compile time, always into a `const`:
+  `const BULLET_SCENE: PackedScene`, a `FontFile`.
 - `load(...)` only for a path discovered at runtime — scanning a directory into a
   dictionary at startup, for instance.
 
@@ -477,7 +478,7 @@ two forces casts and rounding bugs.
 method, unreachable state.
 
 ```gdscript
-			printerr("Spawner: " + self.name + " ran out of spawn points with budget left.")
+	printerr("Spawner: " + self.name + " ran out of spawn points with budget left.")
 ```
 
 `print(...)` is a temporary field-debugging tool and does not survive into a commit.
@@ -489,8 +490,8 @@ method, unreachable state.
 rotating 180°, so children keep their upright orientation.
 
 ```gdscript
-		directional.scale.y = -1
-		directional.rotation_degrees = 180
+	directional.scale.y = -1
+	directional.rotation_degrees = 180
 ```
 
 **HitBox / HurtBox pair.** Combat is two `Area2D`s. The attacker's `HitBox` deals
@@ -503,6 +504,7 @@ everything damageable a shared base class, and let the HurtBox hold a typed expo
 
 ```gdscript
 class_name Character extends CharacterBody2D
+
 
 func take_damage(_damage: int, _direction: Direction) -> void:
 	pass
@@ -543,12 +545,12 @@ subclasses a wiring point, route it through an overridable `_setup()` with a `pa
 body. Use this only where a hierarchy actually needs it.
 
 ```gdscript
-func _setup() -> void:
-	pass
-
-
 func _ready() -> void:
 	_setup()
+
+
+func _setup() -> void:
+	pass
 ```
 
 The hook is **not** called `_on_ready`. This style bans every `func _on_*` name, and a

@@ -8,6 +8,13 @@ var SPEED: float = randf_range(MIN_SPEED, MAX_SPEED)
 var health: int = 30
 
 
+func _physics_process(delta: float) -> void:
+	super(delta)
+	if knockback_buffer_time > 0:
+		return
+	velocity.x = SPEED * c_direction
+
+
 func take_damage(damage: int, direction: Direction) -> void:
 	health -= damage
 	knockback_buffer_time = KNOCKBACK_TIME
@@ -15,10 +22,3 @@ func take_damage(damage: int, direction: Direction) -> void:
 	if health <= 0:
 		Global.report_enemy_died(self)
 		queue_free()
-
-
-func _physics_process(delta: float) -> void:
-	super(delta)
-	if knockback_buffer_time > 0:
-		return
-	velocity.x = SPEED * c_direction

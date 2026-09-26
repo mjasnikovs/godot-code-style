@@ -11,9 +11,9 @@ var c_direction: Direction = Direction.right
 var knockback_buffer_time: float = 0.0
 
 
-func take_damage(_damage: int, _direction: Direction) -> void:
-	pass
-
-
 func _physics_process(delta: float) -> void:
 	knockback_buffer_time = max(0, knockback_buffer_time - delta)
+
+
+func take_damage(_damage: int, _direction: Direction) -> void:
+	pass

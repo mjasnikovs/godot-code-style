@@ -1,6 +1,6 @@
 class_name EnemySpawner extends Node2D
 
-const enemy: PackedScene = preload("res://scenes/enemy.tscn")
+const ENEMY_SCENE: PackedScene = preload("res://scenes/enemy.tscn")
 const SPAWN_TIME: float = 2.0
 
 @export_category("Settings")
@@ -19,17 +19,6 @@ func _ready() -> void:
 	_spawning = true
 
 
-func spawn() -> void:
-	if budget <= 0:
-		printerr("EnemySpawner: " + self.name + " asked to spawn with no budget left.")
-		return
-	var point: Node2D = spawn_points[randi() % spawn_points.size()]
-	var instance: Enemy = enemy.instantiate()
-	instance.global_position = point.global_position
-	budget -= 1
-	Global.world.call_deferred("add_child", instance)
-
-
 func _process(delta: float) -> void:
 	if !_spawning:
 		return
@@ -38,3 +27,14 @@ func _process(delta: float) -> void:
 		return
 	_spawn_time = SPAWN_TIME
 	spawn()
+
+
+func spawn() -> void:
+	if budget <= 0:
+		printerr("EnemySpawner: " + self.name + " asked to spawn with no budget left.")
+		return
+	var point: Node2D = spawn_points[randi() % spawn_points.size()]
+	var instance: Enemy = ENEMY_SCENE.instantiate()
+	instance.global_position = point.global_position
+	budget -= 1
+	Global.world.call_deferred("add_child", instance)

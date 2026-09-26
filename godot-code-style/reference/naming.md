@@ -1,6 +1,7 @@
 # Naming, declarations and shapes
 
-Everything here is the canonical form. Where a second form is allowed, it says so.
+Everything here is the canonical form, one per thing. The per-instance SCREAMING
+`var` below is the single exception, and it says why.
 
 ## Class declaration
 
@@ -36,8 +37,7 @@ refer to the singleton by its **registration** name; the class name is only for 
 ### The two meaningful prefixes
 
 `c_` is "current value". A state machine's live state is `c_state`; a character's live
-facing is `c_direction`. Dropping the prefix on a current-value var is the one allowed
-second form — pick one per class and stay with it.
+facing is `c_direction`. Every current-value var carries it.
 
 `*_time` is a seconds countdown, always a `float`, always decayed per frame (pattern 2
 in `patterns.md`).
@@ -59,11 +59,15 @@ guard, name it `force_*`:
 
 ## Constants
 
-SCREAMING_SNAKE, explicitly typed. Scene and resource preloads are typed `const`s:
+SCREAMING_SNAKE, explicitly typed, every one of them: scalars, collections,
+config dictionaries and preloads alike. A preloaded scene ends in `_SCENE`:
 
 ```gdscript
-const gold: PackedScene = preload("res://scenes/items/gold.tscn")
+const GOLD_SCENE: PackedScene = preload("res://scenes/items/gold.tscn")
 ```
+
+`.gdlintrc` enforces it: `constant-name` keeps gdlint's SCREAMING default, and
+`load-constant-name` is narrowed to SCREAMING only.
 
 Tuning dials for one behaviour sit adjacent in the same file:
 
@@ -116,9 +120,7 @@ func emit(target: Enemy, damage: int, direction: Enemy.Direction) -> void:
 enum Background { red, blue }
 ```
 
-SCREAMING members are the allowed second form for purely categorical phase enums
-(`DAY`/`NIGHT`, `IDLE`/`RELOADING`/`ENDING`). Lowercase stays the default everywhere
-else.
+Enum members are lowercase in every enum. `.gdlintrc` accepts nothing else.
 
 Do **not** model a projectile's facing as a `Direction` enum. A projectile carries a
 plain signed int, set from outside before use:
@@ -156,15 +158,13 @@ is asserted in `_ready`.
 
 ## `@onready`
 
-Use it for two things:
+Use it for one thing: a value derived from other members at ready time — an index
+array built from exported values, a `RandomNumberGenerator.new()`.
 
-1. A value derived from other members at ready time — an index array built from
-   exported values, a `RandomNumberGenerator.new()`.
-2. A one-time load used at ready time. `@onready` + `preload()` is the sanctioned
-   ready-time load form:
+`@onready` never preloads. A preload is known at compile time, so it is a `const`:
 
 ```gdscript
-@onready var bullet: PackedScene = preload("res://scenes/items/bullet.tscn")
+const BULLET_SCENE: PackedScene = preload("res://scenes/items/bullet.tscn")
 ```
 
 `@onready` never grabs a node. `@onready var spider: Spider = $World/Spider` is a
@@ -175,6 +175,12 @@ come in through `@export` only:
 @export_category("Nodes")
 @export var spider: Spider
 ```
+
+In the `.tscn` that slot is `spider = NodePath("World/Spider")`, and it resolves on
+`instantiate()` only when the node line also carries
+`node_paths=PackedStringArray("spider")`. The editor writes that header when you
+drag the node into the slot. A hand-written scene that forgets it reads the export
+back as `null`, and the `_ready` assert is what says so. Measured on 4.7.2.
 
 ## Custom setters
 
@@ -229,9 +235,15 @@ A scene and the script that drives it share a stem: `player.tscn` and `player.gd
 
 Double quotes, everywhere. Single quotes do not appear.
 
+One case needs care. `gdformat` rewrites `"\""` as `'"'`, so a string holding a double
+quote cannot stay double-quoted. Compare the character by code point instead, through
+a named constant: `line.unicode_at(index) == DOUBLE_QUOTE`. Measured on gdtoolkit
+4.5.0.
+
 Use `StringName` for anything the engine compares by name — animation names, input
-actions, group names. Node paths are not on the list, because a script never holds one. The literal form is `&"idle"`. It interns once and
-compares by pointer, so a per-frame comparison costs nothing.
+actions, group names. Node paths are not on the list, because a script never holds
+one. The literal form is `&"idle"`. It interns once and compares by pointer, so a
+per-frame comparison costs nothing.
 
 ```gdscript
 	var new_anim: StringName = State.keys()[c_state]

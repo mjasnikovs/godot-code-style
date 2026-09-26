@@ -1,12 +1,8 @@
 class_name MagnumWeapon extends Weapon
 
-const bullet: PackedScene = preload("res://scenes/bullet.tscn")
+const BULLET_SCENE: PackedScene = preload("res://scenes/bullet.tscn")
 
 var shots_fired: int = 0
-
-
-func _setup() -> void:
-	shots_fired = 0
 
 
 func fire() -> void:
@@ -14,6 +10,10 @@ func fire() -> void:
 		return
 	super()
 	shots_fired += 1
-	var instance: Bullet = bullet.instantiate()
+	var instance: Bullet = BULLET_SCENE.instantiate()
 	instance.direction = 1
 	Global.world.call_deferred("add_child", instance)
+
+
+func _setup() -> void:
+	shots_fired = 0

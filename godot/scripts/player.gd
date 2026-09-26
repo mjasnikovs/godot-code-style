@@ -2,11 +2,11 @@ class_name Player extends Character
 
 enum State { idle, walk, jump, fall, attack, hit }
 
-const blocked_states: Array[State] = [State.attack, State.hit]
+const BLOCKED_STATES: Array[State] = [State.attack, State.hit]
 const SPEED: float = 100.0
 const JUMP_VELOCITY: float = -300.0
 const JUMP_BUFFER_TIME: float = 0.1
-const gold: PackedScene = preload("res://scenes/gold.tscn")
+const GOLD_SCENE: PackedScene = preload("res://scenes/gold.tscn")
 
 @export_category("Nodes")
 @export var directional: Node2D
@@ -28,13 +28,39 @@ func _ready() -> void:
 	)
 
 
+func _physics_process(delta: float) -> void:
+	super(delta)
+	jump_buffer_time = max(0, jump_buffer_time - delta)
+	on_floor = is_on_floor()
+
+	if Input.is_action_just_pressed(&"button_a"):
+		jump_buffer_time = JUMP_BUFFER_TIME
+
+	if jump_buffer_time > 0 and on_floor:
+		jump_buffer_time = 0.0
+		velocity.y = JUMP_VELOCITY
+
+	if knockback_buffer_time > 0:
+		velocity.x = move_toward(velocity.x, 0.0, SPEED)
+	elif on_floor and !is_zero_approx(velocity.x):
+		set_state(State.walk)
+	elif on_floor:
+		set_state(State.idle)
+	elif velocity.y < 0.0:
+		set_state(State.jump)
+	else:
+		set_state(State.fall)
+
+	var _collided: bool = move_and_slide()
+
+
 func force_state(state: State) -> void:
 	c_state = state
 	set_animation()
 
 
 func set_state(state: State) -> void:
-	if blocked_states.has(c_state):
+	if BLOCKED_STATES.has(c_state):
 		return
 	c_state = state
 	set_animation()
@@ -61,7 +87,7 @@ func face(direction: Direction) -> void:
 
 
 func drop_gold() -> void:
-	var instance: Node2D = gold.instantiate()
+	var instance: Node2D = GOLD_SCENE.instantiate()
 	instance.global_position = global_position
 	Global.world.call_deferred("add_child", instance)
 
@@ -74,29 +100,3 @@ func report_player_died(who: Player) -> void:
 func die() -> void:
 	report_player_died(self)
 	queue_free()
-
-
-func _physics_process(delta: float) -> void:
-	super(delta)
-	jump_buffer_time = max(0, jump_buffer_time - delta)
-	on_floor = is_on_floor()
-
-	if Input.is_action_just_pressed("button_a"):
-		jump_buffer_time = JUMP_BUFFER_TIME
-
-	if jump_buffer_time > 0 and on_floor:
-		jump_buffer_time = 0.0
-		velocity.y = JUMP_VELOCITY
-
-	if knockback_buffer_time > 0:
-		velocity.x = move_toward(velocity.x, 0.0, SPEED)
-	elif on_floor and !is_zero_approx(velocity.x):
-		set_state(State.walk)
-	elif on_floor:
-		set_state(State.idle)
-	elif velocity.y < 0.0:
-		set_state(State.jump)
-	else:
-		set_state(State.fall)
-
-	var _collided: bool = move_and_slide()

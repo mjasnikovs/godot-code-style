@@ -8,7 +8,7 @@ as a bug. That is the whole value: reading a file tells you nothing new about th
 author, so it can tell you something about the code.
 
 Every rule was measured against the working project in `godot/`, not copied from a
-tutorial. Four of them changed when the compiler disagreed.
+tutorial. The table at the end lists the ones that changed when the compiler disagreed.
 
 ## The one setting
 
@@ -40,7 +40,7 @@ class_name Player extends CharacterBody2D
 
 enum State { idle, walk, jump, fall, attack, hit }
 
-const blocked_states: Array[State] = [State.attack, State.hit]
+const BLOCKED_STATES: Array[State] = [State.attack, State.hit]
 const JUMP_VELOCITY: float = -300.0
 
 @export_category("Nodes")
@@ -78,9 +78,9 @@ lambdas. Layout is whatever `gdformat` writes.
 ## What it forbids
 
 `match`, inner classes, `static` functions, custom `Resource` subclasses,
-`Vector2i`, `##` doc-comments, editor-generated `_on_<signal>` handlers, `print(...)`
-in committed code, and raw `get_tree().get_root().get_node(...)` outside the one
-autoload allowed to hold scene paths.
+`Vector2i`, `##` doc-comments, `_on_*` handlers and editor-made connections,
+`print(...)` in committed code tests included, and every node lookup by path —
+`$Path`, `%Name`, `get_node(...)` — anywhere. Nodes arrive through `@export`.
 
 `@tool` is discouraged rather than forbidden. It runs code in the editor with no undo,
 so a script gets it only when the user approves.
@@ -98,7 +98,7 @@ godot --headless --import
 godot --headless --quit-after 180            # must print nothing
 gdformat --check scripts/ tests/
 gdlint scripts/ tests/
-godot --headless tests/verify.tscn --quit-after 400   # 4049 checks, exit 0 = pass
+godot --headless tests/verify.tscn --quit-after 400   # must print nothing, exit 0
 ```
 
 All 49 of Godot's GDScript warnings are set to **error**, including `untyped_declaration`,
@@ -115,11 +115,13 @@ one fires, and there is not a single suppression in it.
 | `Global.enemy_died.emit(self)` from a caller | `Global.report_enemy_died(self)` — `unused_signal` only counts uses inside the declaring class, and `emit` type-checks nothing |
 | formatted by hand, `gdformat` banned | `gdformat` at 120 owns layout — the claim that it splits `class_name X extends Y` was false on 4.5.0 |
 | a launch that prints nothing proves every script compiles | it proves only the scripts the main scene reaches; the self-test now loads every one |
+| the self-test printed a pass line | a `verify.gd` that fails to parse exits 0 too, so the self-test is silent on a pass and CI fails on any output |
+| 23 warnings as errors, a lowercase `const`, two ways to preload | all 49 warnings, SCREAMING constants only, `const` preloads only |
 
 ## Read it
 
-- **[godot-code-style/SKILL.md](godot-code-style/SKILL.md)** — the whole style in 200
-  lines. Start here.
+- **[godot-code-style/SKILL.md](godot-code-style/SKILL.md)** — the whole style.
+  Start here.
 - [godot-code-style/reference/naming.md](godot-code-style/reference/naming.md) — the
   full naming table, enum shapes, custom setters, export grouping.
 - [godot-code-style/reference/patterns.md](godot-code-style/reference/patterns.md) —

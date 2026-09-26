@@ -4,7 +4,7 @@ enum Background { red, blue }
 enum Icon { bow, sword }
 
 # Config lives in const Dictionary blobs, never a Resource subclass.
-const magnum_1: Dictionary = {
+const MAGNUM_1: Dictionary = {
 	"background": Background.blue,
 	"icon": Icon.bow,
 	"title_label": "Magnum",
