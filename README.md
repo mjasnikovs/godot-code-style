@@ -52,6 +52,7 @@ var jump_buffer_time: float = 0.0
 
 
 func _ready() -> void:
+	assert(directional, "player.gd - @export directional is not set in the editor on: " + self.name)
 	assert(animation, "player.gd - @export animation is not set in the editor on: " + self.name)
 	var _error: int = animation.animation_finished.connect(
 		func(_anim_name: StringName) -> void: force_state(State.idle)
@@ -88,7 +89,7 @@ so a script gets it only when the user approves.
 
 And `@warning_ignore`. Game code gets no suppression of any kind — a warning is a
 value whose type you have not declared yet, so declare it. A gdUnit4 suite gets the
-two file-wide ignores its fluent asserts force, and nothing else.
+file-wide and one-line ignores the `godot-gdunit4` skill names, and nothing else.
 
 ## Run it
 

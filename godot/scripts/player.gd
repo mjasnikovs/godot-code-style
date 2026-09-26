@@ -75,12 +75,12 @@ func set_animation() -> void:
 func take_damage(damage: int, direction: Direction) -> void:
 	if damage <= 0:
 		return
-	knockback_buffer_time = KNOCKBACK_TIME
+	knockback_buffer_time = KNOCKBACK_BUFFER_TIME
 	velocity.x = 60.0 * direction
 	force_state(State.hit)
 
 
-func face(direction: Direction) -> void:
+func set_direction(direction: Direction) -> void:
 	c_direction = direction
 	directional.scale.y = -1 if direction == Direction.left else 1
 	directional.rotation_degrees = 180 if direction == Direction.left else 0
@@ -89,14 +89,14 @@ func face(direction: Direction) -> void:
 func drop_gold() -> void:
 	var instance: Node2D = GOLD_SCENE.instantiate()
 	instance.global_position = global_position
-	Global.world.call_deferred("add_child", instance)
+	Global.world.call_deferred(&"add_child", instance)
 
 
 # emit is varargs and checks nothing, so every signal gets a typed emitter.
-func report_player_died(who: Player) -> void:
+func _report_player_died(who: Player) -> void:
 	player_died.emit(who)
 
 
 func die() -> void:
-	report_player_died(self)
+	_report_player_died(self)
 	queue_free()

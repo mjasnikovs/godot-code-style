@@ -73,7 +73,7 @@ Assign it to a typed `_`-prefixed throwaway, declared once per scope and reused:
 
 ```gdscript
 	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void: force_state(State.idle))
-	_error = self.area_entered.connect(func(hitbox: HitBox) -> void: take_hit(hitbox))
+	_error = reload_timer.timeout.connect(func() -> void: reload())
 ```
 
 **The type is `int`, not `Error`.** `connect` is declared as returning `int`, and
@@ -88,7 +88,8 @@ wiring and the editor silently owns the connection.
 
 ```gdscript
 	var _error: int = self.area_entered.connect(
-		func(hitbox: HitBox) -> void:
+		func(area: Area2D) -> void:
+			var hitbox: HitBox = area as HitBox
 			if !hitbox or parent_hit_box == hitbox:
 				return
 			take_hit(hitbox)
@@ -179,7 +180,7 @@ you keep it in a typed local or member. That is always allowed.
 
 ```gdscript
 	var instance: Enemy = enemy.instantiate()
-	Global.world.call_deferred("add_child", instance)
+	Global.world.call_deferred(&"add_child", instance)
 ```
 
 For a node someone else placed, there are three approved ways to get a reference.
@@ -203,7 +204,7 @@ func _ready() -> void:
 ```
 
 ```gdscript
-	Global.world.call_deferred("add_child", gold_instance)
+	Global.world.call_deferred(&"add_child", gold_instance)
 ```
 
 **Handed in by the code that made it.** A spawner that instantiates a node keeps its
@@ -307,7 +308,7 @@ lives, a `.tres` file per instance, and an editor round-trip for every change. T
 boundary function is the price of keeping data in code.
 
 Runtime look-up tables are the same idea built at load: a sound name → `AudioStream`
-dictionary, or a `State` → `Array[String]` map picked from at random.
+dictionary, or a `State` → `Array[AudioStream]` map picked from at random.
 
 ```gdscript
 	var sounds: Array[AudioStream] = sfx[c_state]
@@ -402,11 +403,11 @@ For a cross-object call that must land after the current frame — re-parenting 
 freshly instantiated node, refreshing a UI element after the value behind it changed.
 
 ```gdscript
-	Global.world.call_deferred("add_child", gold_instance)
+	Global.world.call_deferred(&"add_child", gold_instance)
 ```
 
 ```gdscript
-	Global.bullet_bar.call_deferred("update_bullets")
+	Global.bullet_bar.call_deferred(&"update_bullets")
 ```
 
 ## `queue_free` and cleanup
@@ -527,13 +528,23 @@ class_name HurtBox extends Area2D
 func _ready() -> void:
 	assert(character, "hurt_box.gd - @export character is not set in the editor on: " + self.name)
 	var _error: int = self.area_entered.connect(
-		func(hitbox: HitBox) -> void:
+		func(area: Area2D) -> void:
+			var hitbox: HitBox = area as HitBox
+			if !hitbox:
+				return
 			if hitbox.character == character:
 				return
 			if hitbox.character is Enemy and character is Enemy:
 				return
-			character.take_damage(hitbox.damage, hitbox.direction)
+			character.take_damage(hitbox.damage, hitbox.character.c_direction)
 	)
+```
+
+`area_entered` hands over any `Area2D`, so the lambda takes `Area2D` and the `as` cast
+is where `HitBox` is asserted. A lambda typed `HitBox` compiles and then raises at
+runtime on the first other area that enters.
+
+```gdscript
 ```
 
 The base method has a `pass` body because `@abstract` is not used, and its parameters

@@ -5,7 +5,7 @@ class_name Character extends CharacterBody2D
 
 enum Direction { left = -1, right = 1 }
 
-const KNOCKBACK_TIME: float = 0.1
+const KNOCKBACK_BUFFER_TIME: float = 0.1
 
 var c_direction: Direction = Direction.right
 var knockback_buffer_time: float = 0.0

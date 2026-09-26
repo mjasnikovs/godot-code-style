@@ -12,7 +12,7 @@ func fire() -> void:
 	shots_fired += 1
 	var instance: Bullet = BULLET_SCENE.instantiate()
 	instance.direction = 1
-	Global.world.call_deferred("add_child", instance)
+	Global.world.call_deferred(&"add_child", instance)
 
 
 func _setup() -> void:

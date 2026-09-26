@@ -74,7 +74,7 @@ Tuning dials for one behaviour sit adjacent in the same file:
 ```gdscript
 const MAX_SPEED: float = 65.0
 const MIN_SPEED: float = 35.0
-const KNOCKBACK_TIME: float = 0.1
+const KNOCKBACK_BUFFER_TIME: float = 0.1
 ```
 
 ### The per-instance SCREAMING exception
@@ -146,8 +146,8 @@ Group exports into titled editor sections by concern — `"Settings"`, `"Nodes"`
 
 ```gdscript
 @export_category("Settings")
-@export var ready_health: int
-@export var budget_cost: int
+@export var ready_health: int = 100
+@export var budget_cost: int = 0
 
 @export_category("Nodes")
 @export var directional: Node2D
@@ -229,8 +229,9 @@ The `project.godot` warning block that enforces this is in `checklist.md`.
 ## Files and folders
 
 Filenames are snake_case and derive from the `class_name`: `EnemySpawner` lives in
-`enemy_spawner.gd`. Folders are snake_case, named for what is in them (`character/`,
-`items/`, `ui/`, `weapons/`), never for a layer (`scripts/managers/`).
+`enemy_spawner.gd`. Inside `scripts/` and `scenes/`, folders are snake_case and named
+for what is in them (`character/`, `items/`, `ui/`, `weapons/`), never for a layer
+(`managers/`).
 
 A scene and the script that drives it share a stem: `player.tscn` and `player.gd`.
 
@@ -278,5 +279,6 @@ Commented-out code does not get committed. Git remembers it.
 - **Two blank lines between functions.** One blank line between member blocks (the
   `const` block, then the `@export` block, and so on). None inside a function unless
   it separates two genuinely distinct steps.
-- No blank line directly after a `func` signature or before the first member.
+- No blank line directly after a `func` signature. One blank line after the
+  declaration on line 1, then the first member.
 - Ternaries use the GDScript form: `var polarity: int = 1 if value >= 0 else -1`.

@@ -15,7 +15,7 @@ description: >
 
 Verified against Godot 4.7.2 and gdtoolkit 4.5.0 by building the project in `godot/`
 and running it. Every rule below compiles with all 49 warnings as errors and no
-suppressions, and the project's self-test checks that it stays that way.
+suppressions in game code, and the project's self-test checks that it stays that way.
 
 One dialect. Every script in the project looks like it was written by the same person
 in the same hour. Where Godot offers two ways to do a thing, this style picks one and
@@ -101,7 +101,8 @@ var SPEED: float = randf_range(MIN_SPEED, MAX_SPEED)
 
 ## Types
 
-Everything is annotated. No `:=`, no bare `var`.
+Everything is annotated. No `:=`, no bare `var`. The one gap is a setter's parameter,
+which takes its type from the property.
 
 ```gdscript
 func arm(weapon_scene: PackedScene, count: int) -> void:
@@ -111,7 +112,7 @@ func arm(weapon_scene: PackedScene, count: int) -> void:
 ```
 
 Void functions write `-> void`. Loop variables are typed. Lambda parameters are typed:
-`func(hitbox: HitBox) -> void:`.
+`func(area: Area2D) -> void:`.
 
 Tabs, never spaces. Lines ≤ 120 characters. `gdformat` at 120 writes the layout, so
 never format by hand (`reference/checklist.md`).
@@ -282,7 +283,7 @@ throwaway per type per scope and reuse it:
 
 ```gdscript
 	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void: force_state(State.idle))
-	_error = area_entered.connect(func(hitbox: HitBox) -> void: take_hit(hitbox))
+	_error = reload_timer.timeout.connect(func() -> void: reload())
 ```
 
 The type is `int`, not `Error`. `connect` is declared as returning `int`, so annotating

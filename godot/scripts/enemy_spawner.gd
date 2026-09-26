@@ -37,4 +37,4 @@ func spawn() -> void:
 	var instance: Enemy = ENEMY_SCENE.instantiate()
 	instance.global_position = point.global_position
 	budget -= 1
-	Global.world.call_deferred("add_child", instance)
+	Global.world.call_deferred(&"add_child", instance)

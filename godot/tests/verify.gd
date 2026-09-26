@@ -349,8 +349,8 @@ func verify_state_machine() -> void:
 	if !player:
 		return
 
-	check(Player.Direction.left == -1, "Direction.left is -1")
-	check(Player.Direction.right == 1, "Direction.right is 1")
+	check(Character.Direction.left == -1, "Direction.left is -1")
+	check(Character.Direction.right == 1, "Direction.right is 1")
 
 	player.force_state(Player.State.idle)
 	player.set_state(Player.State.walk)

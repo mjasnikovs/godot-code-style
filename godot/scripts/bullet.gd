@@ -4,7 +4,7 @@ const SPEED: float = 220.0
 const LIFETIME: float = 3.0
 
 # A projectile's facing is a plain signed int, not a Direction enum.
-var direction: int = 1
+var direction: int
 var damage: int = 5
 
 

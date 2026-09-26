@@ -81,18 +81,19 @@ Six of them make the typing self-enforcing. `untyped_declaration` and
 cannot be used until you have named its type.
 
 There is no suppression in game code. `@warning_ignore` is not part of this style, and
-no warning is lowered below `2` to make a file compile. A gdUnit4 suite gets the two
-file-wide ignores the SKILL names, and nothing else. A warning that fires is a value whose type
+no warning is lowered below `2` to make a file compile. A gdUnit4 suite gets the
+file-wide and one-line ignores the `godot-gdunit4` skill names, and nothing else. A warning that fires is a value whose type
 you have not declared yet — declare it.
 
-Two moves are legitimate, because both change the code instead of muting the compiler:
+Three moves are legitimate, because each changes the code instead of muting the compiler:
 
 - Rename an unused parameter to `_name`.
+- Rename a loop counter nobody reads to `_i`.
 - Assign an unwanted return to a typed `_`-prefixed throwaway, one per type per scope.
 
 ```gdscript
 	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void: force_state(State.idle))
-	_error = self.area_entered.connect(func(hitbox: HitBox) -> void: take_hit(hitbox))
+	_error = reload_timer.timeout.connect(func() -> void: reload())
 	var _collided: bool = move_and_slide()
 ```
 
@@ -114,7 +115,7 @@ guide.
 | `load-constant-name` also accepts PascalCase | SCREAMING only: `const GOLD_SCENE: PackedScene = preload(...)` |
 | `class-variable-name` wants snake_case | also the per-instance `var SPEED` |
 | `function-variable-name` forbids a leading `_` | also the `var _error` / `var _collided` throwaways |
-| `class-definitions-order` puts signals second | signals after the plain vars |
+| `class-definitions-order` puts signals before the enums and `@onready` after the plain vars | signals after the plain vars, `@onready` right after the exports |
 
 `constant-name` keeps its default, which is SCREAMING only.
 
@@ -151,7 +152,8 @@ replace — `trailing-whitespace`, `unnecessary-pass`, `unused-argument`,
 config with `gdlint -d`; this short file is the whole thing.
 
 Two of these lines narrow a rule to the one form the style allows. Two widen a
-rule to accept a form the style requires, and the order list moves signals. None
+rule to accept a form the style requires, and the order list moves the signals and
+the `@onready` vars. None
 of them turns a check off. The `disable:` list stays empty.
 
 Three defaults decide how big things get, and the style keeps all three:
@@ -317,6 +319,9 @@ autoload. It does not register autoloads, so every script that names one fails w
 - [ ] Overridable base methods with a `pass` body take `_`-prefixed parameters.
 - [ ] `gdformat --check` and `gdlint`, run **from the project root**, are clean, a
       headless launch is silent, and every script loads.
+- [ ] A gdUnit4 suite is held to every line above except the exceptions the SKILL
+      names: no `class_name`, the fuzzer `:=`, `runner.find_child(...)`, an engine
+      signal emitted on the scene under test, and the ignores. Nothing else.
 
 ## Reviewing an existing file
 

@@ -17,7 +17,7 @@ func _physics_process(delta: float) -> void:
 
 func take_damage(damage: int, direction: Direction) -> void:
 	health -= damage
-	knockback_buffer_time = KNOCKBACK_TIME
+	knockback_buffer_time = KNOCKBACK_BUFFER_TIME
 	velocity.x = 40.0 * direction
 	if health <= 0:
 		Global.report_enemy_died(self)
