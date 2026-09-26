@@ -16,9 +16,8 @@ class_name Player extends CharacterBody2D
 - No shebang, no license header, no top-of-file comment.
 - Autoloads omit `class_name` entirely and open with `extends Node`.
 
-A `class_name` may differ in casing from the autoload registration name in
-`project.godot` (`SFXPlayer2D` registered as `SfxPlayer2d`). When that happens, always
-refer to the singleton by its **registration** name; the class name is only for typing.
+An autoload has one name: the registration name in `project.godot`. Every script
+refers to it by that name, and the singleton's own type is never written out.
 
 ## The naming table
 
@@ -108,8 +107,9 @@ enum State { idle, walk, jump, fall, attack, hit, death }
 enum Direction { left = -1, right = 1 }
 ```
 
-Each class that needs a facing declares its own. Reference another class's enum by
-qualified name: `Player.Direction`, `Enemy.State`.
+A family that shares a facing declares it once, on the shared base class
+(`Character.Direction`), and every subclass inherits it. Reference another class's
+enum by qualified name: `Player.State`, `Character.Direction`.
 
 ```gdscript
 func emit(target: Enemy, damage: int, direction: Enemy.Direction) -> void:
@@ -130,7 +130,7 @@ plain signed int, set from outside before use:
 var direction: int
 ```
 
-`Direction` is reserved for things that have a state machine attached.
+`Direction` is reserved for characters, the things that move under their own control.
 
 ## `@export` and `@export_category`
 
@@ -154,8 +154,9 @@ Group exports into titled editor sections by concern — `"Settings"`, `"Nodes"`
 @export var animation: AnimationPlayer
 ```
 
-Every node reference in a script is an `@export`, and every exported node reference
-is asserted in `_ready`.
+Every placed node a script reaches is an `@export`, and every exported node reference
+is asserted in `_ready`. A node the script creates is not placed: `instantiate()` and
+`.new()` return the reference, and it stays in a typed local or member.
 
 ## `@onready`
 
@@ -218,7 +219,8 @@ No exceptions and no inference.
 
 - Every `const`, member `var` and local `var` is annotated.
 - Every parameter is typed, every function has a return type, and void functions
-  write `-> void`.
+  write `-> void`. The one untyped parameter is a setter's: Godot 4.7.2 refuses
+  `set(value: int)` as a parse error and takes the type from the property.
 - `for` loops type the loop variable: `for i: int in range(5):`.
 - Lambda parameters are typed: `func(body: Node2D) -> void:`.
 
@@ -277,4 +279,4 @@ Commented-out code does not get committed. Git remembers it.
   `const` block, then the `@export` block, and so on). None inside a function unless
   it separates two genuinely distinct steps.
 - No blank line directly after a `func` signature or before the first member.
-- Ternaries use the GDScript form: `var sign: int = 1 if value >= 0 else -1`.
+- Ternaries use the GDScript form: `var polarity: int = 1 if value >= 0 else -1`.

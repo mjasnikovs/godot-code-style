@@ -80,8 +80,9 @@ Six of them make the typing self-enforcing. `untyped_declaration` and
 `unsafe_*` access and cast errors close the gap left behind: a value that reached you as a `Variant`
 cannot be used until you have named its type.
 
-There is no suppression. `@warning_ignore` is not part of this style, and no warning is
-lowered below `2` to make a file compile. A warning that fires is a value whose type
+There is no suppression in game code. `@warning_ignore` is not part of this style, and
+no warning is lowered below `2` to make a file compile. A gdUnit4 suite gets the two
+file-wide ignores the SKILL names, and nothing else. A warning that fires is a value whose type
 you have not declared yet — declare it.
 
 Two moves are legitimate, because both change the code instead of muting the compiler:
@@ -234,9 +235,14 @@ godot --headless --quit-after 180
 Anything on stdout beyond the engine banner is a failure. In CI:
 
 ```sh
-output=$(godot --headless --quit-after 180 2>&1 | grep -v '^Godot Engine' || true)
-if [ -n "$output" ]; then echo "$output"; exit 1; fi
+status=0
+output=$(godot --headless --quit-after 180 2>&1) || status=$?
+output=$(echo "$output" | grep -v '^Godot Engine' || true)
+if [ -n "$output" ] || [ "$status" != 0 ]; then echo "$output"; exit 1; fi
 ```
+
+The exit code is checked as well as the output. Godot exits non-zero on a crash that
+prints nothing past the banner, and a `| grep` alone would swallow it.
 
 It only parses the scripts the main scene reaches. Measured on 4.7.2: an untyped
 script nothing loads printed nothing, and the step passed. So the project also
@@ -268,7 +274,8 @@ autoload. It does not register autoloads, so every script that names one fails w
       the `"<file>.gd - @export <name> is not set in the editor on: " + self.name`
       message. Value exports (`int`, `float`, `bool`, `String`) are not asserted.
 - [ ] Every signal is emitted from a typed method on its declaring class, never by a
-      bare `emit()` from a caller. `emit` is varargs and checks nothing.
+      bare `emit()` from a caller. `emit` is varargs and checks nothing. A gdUnit4 suite
+      may emit an engine signal of the scene under test to stand in for the input.
 - [ ] No function named `_on_*`. A base-class ready hook is `_setup()`.
 - [ ] No node picked out of the tree by position: no `$Path`, `%UniqueName`,
       `get_node(...)`, `has_node(...)`, `find_child(...)`, `find_children(...)`,
@@ -300,7 +307,8 @@ autoload. It does not register autoloads, so every script that names one fails w
       failures; a harness is silent on a pass.
 - [ ] No method called through `owner` or `get_parent()`. Typed `@export` reference to
       a real class instead, with a shared base class where a family needs one.
-- [ ] Every `await` followed by a node access has an `is_instance_valid(self)` guard.
+- [ ] Every `await` followed by a node access has an `is_instance_valid(self)` guard in
+      game code. A suite or harness is not freed while it waits, so it has none.
 - [ ] Discarded returns assigned to a typed `_`-prefixed throwaway.
 - [ ] Filenames snake_case and matching the `class_name`. Double-quoted strings.
       `StringName` (`&"idle"`) for engine name comparisons.

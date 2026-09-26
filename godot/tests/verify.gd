@@ -1,6 +1,7 @@
 class_name Verify extends Node2D
 
 const SCRIPTS_DIR: String = "res://scripts/"
+const SCENES_DIR: String = "res://scenes/"
 const APOSTROPHE: String = "'"
 # gdformat rewrites a string holding a double quote into single quotes, so it is a code point.
 const DOUBLE_QUOTE: int = 34
@@ -62,11 +63,12 @@ var failures: int = 0
 
 
 func _ready() -> void:
-	var sources: Dictionary = read_scripts()
+	var sources: Dictionary = read_files(SCRIPTS_DIR, ".gd")
 	check(sources.size() >= 10, "the verification project has scripts to check")
 
 	verify_declarations(sources)
 	verify_prohibited(sources)
+	verify_scenes(read_files(SCENES_DIR, ".tscn"))
 	verify_signal_emitters(sources)
 	verify_layout(sources)
 	verify_asserts(sources)
@@ -116,14 +118,14 @@ func strip_noise(text: String) -> String:
 	return out
 
 
-func read_scripts() -> Dictionary:
+func read_files(directory: String, extension: String) -> Dictionary:
 	var out: Dictionary = {}
-	var dir: DirAccess = DirAccess.open(SCRIPTS_DIR)
-	assert(dir, "verify.gd - cannot open " + SCRIPTS_DIR)
+	var dir: DirAccess = DirAccess.open(directory)
+	assert(dir, "verify.gd - cannot open " + directory)
 	for file_name: String in dir.get_files():
-		if !file_name.ends_with(".gd"):
+		if !file_name.ends_with(extension):
 			continue
-		var file: FileAccess = FileAccess.open(SCRIPTS_DIR + file_name, FileAccess.READ)
+		var file: FileAccess = FileAccess.open(directory + file_name, FileAccess.READ)
 		out[file_name] = file.get_as_text()
 	return out
 
@@ -157,6 +159,8 @@ func verify_declarations(sources: Dictionary) -> void:
 
 func verify_prohibited(sources: Dictionary) -> void:
 	var untyped_math: RegEx = RegEx.create_from_string("(?<![\\w.])(max|min|clamp|lerp|abs|sign)\\(")
+	# connect(func ...) is the lambda form; anything else after the paren is a method reference.
+	var method_reference: RegEx = RegEx.create_from_string("\\.connect\\(\\s*(?!func\\b)\\S")
 	for file_name: String in sources.keys():
 		var raw: String = sources[file_name]
 		var text: String = strip_noise(raw)
@@ -172,6 +176,10 @@ func verify_prohibited(sources: Dictionary) -> void:
 		for keyword: String in ["if not ", "and not ", "or not ", "while not ", "return not "]:
 			check(!text.contains(keyword), "negation uses ! not the not keyword: " + file_name)
 		check(!text.contains("class Inner"), "no inner classes: " + file_name)
+		check(!text.contains("extends Resource"), "no custom Resource subclasses: " + file_name)
+		check(
+			method_reference.search(text) == null, "every connection is a lambda, not a method reference: " + file_name
+		)
 		check(untyped_math.search(text) == null, "typed math helpers, maxf and clampi not max and clamp: " + file_name)
 		if text.contains("@export var"):
 			check(text.contains("@export_category("), "exports are grouped under @export_category: " + file_name)
@@ -182,6 +190,18 @@ func verify_prohibited(sources: Dictionary) -> void:
 			check(!trimmed.begins_with("print("), "no print in committed code: " + file_name)
 			check(!line.contains(":= "), "no inferred declarations: " + file_name)
 			check(!trimmed.contains(APOSTROPHE), "double-quoted strings only: " + file_name)
+
+
+# --- 2a. Scenes carry no wiring a script should own ----------------------------
+
+
+func verify_scenes(scenes: Dictionary) -> void:
+	check(scenes.size() >= 3, "the verification project has scenes to check")
+	var quote: String = String.chr(DOUBLE_QUOTE)
+	for file_name: String in scenes.keys():
+		var text: String = scenes[file_name]
+		check(!text.contains("[connection"), "no signal connection saved in a scene: " + file_name)
+		check(!text.contains("type=" + quote + "Timer" + quote), "no scene-tree Timer node: " + file_name)
 
 
 # --- 2b. Signals are emitted through a typed method ---------------------------

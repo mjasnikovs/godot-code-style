@@ -145,7 +145,8 @@ tree again:
 ```
 
 This is the crash that survives review, because it only fires when the timing lines
-up. Any `await` followed by a node access needs the guard.
+up. Any `await` followed by a node access needs the guard in game code. A gdUnit4
+suite or a self-test harness is not freed while it waits, so it carries none.
 
 ## 4. The ad-hoc `Timer`
 
@@ -518,6 +519,7 @@ func take_damage(_damage: int, _direction: Direction) -> void:
 ```gdscript
 class_name HurtBox extends Area2D
 
+@export_category("Nodes")
 @export var character: Character
 
 
@@ -566,7 +568,7 @@ hook that reads like a signal handler defeats the point of the ban.
 | Kind | Shape |
 |---|---|
 | **Autoload** | no `class_name`; `extends Node`; the only holder of cross-scene node refs and cross-scene signals |
-| **UI** | `Control` subclass; typed `for` over `get_children()`, never `get_child(i)`; `@export` refs asserted; values decay with `max(0, ...)` |
-| **Projectile** | `Area2D`; plain `var direction: int`, `damage`, `spread`, `lifetime` set externally and asserted in `_ready`; lifetime from a local one-shot `Timer` |
+| **UI** | `Control` subclass; typed `for` over `get_children()`, never `get_child(i)`; `@export` refs asserted; values decay with `maxf(0.0, ...)` |
+| **Projectile** | `Area2D`; plain `var direction: int` and `damage` set externally, `direction` asserted in `_ready`; lifetime a `const` fed to a local one-shot `Timer` |
 | **Spawner** | `_`-prefixed private state; `@onready` index arrays derived from per-level `@export` arrays |
 | **Throwable** | `RigidBody2D`; throw plus a one-shot `Timer` fuse; `explode()` and a `remove()` that calls `queue_free()` |

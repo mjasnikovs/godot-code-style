@@ -152,6 +152,7 @@ ever called through `owner` or `get_parent()`** — both are typed `Node`, so th
 is unsafe by construction. Take an `@export` reference to the real class instead:
 
 ```gdscript
+@export_category("Nodes")
 @export var character: Character
 ```
 
@@ -247,12 +248,13 @@ may open with `@warning_ignore_start("return_value_discarded")` and
 `godot-gdunit4` skill has the two one-line cases it also allows. Game code gets
 none of it.
 
-Everything else in this style holds in test suites too. Two more gdUnit4 needs are
-allowed: a fuzzer parameter keeps `:=`, and a test reaches a node of the scene
-under test with `runner.find_child(...)`, and it may emit an engine signal the
-scene declares, such as a `Button`'s `pressed`, to stand in for the input. A suite
-omits `class_name`; gdUnit4 finds it by path. `print` stays out: a failed assert is
-the report.
+Everything else in this style holds in test suites too. Four more gdUnit4 needs are
+allowed: a fuzzer parameter keeps `:=`; a test reaches a node of the scene under
+test with `runner.find_child(...)`; it may emit an engine signal the scene declares,
+such as a `Button`'s `pressed`, to stand in for the input; and a suite omits
+`class_name`, because gdUnit4 finds it by path. `print` stays out: a failed assert is
+the report. The `is_instance_valid(self)` guard after an `await` is for game code; a
+suite is not freed while it waits.
 
 A test harness that is not a gdUnit4 suite — a self-test scene — follows one rule. It
 prints nothing on a pass. On a failure it prints each one with `printerr` and quits

@@ -80,13 +80,15 @@ lambdas. Layout is whatever `gdformat` writes.
 `match`, inner classes, `static` functions, custom `Resource` subclasses,
 `Vector2i`, `##` doc-comments, `_on_*` handlers and editor-made connections,
 `print(...)` in committed code tests included, and every node lookup by path —
-`$Path`, `%Name`, `get_node(...)` — anywhere. Nodes arrive through `@export`.
+`$Path`, `%Name`, `get_node(...)` — in game code. Nodes arrive through `@export`. A
+gdUnit4 suite alone reaches the scene under test with `runner.find_child(...)`.
 
 `@tool` is discouraged rather than forbidden. It runs code in the editor with no undo,
 so a script gets it only when the user approves.
 
-And `@warning_ignore`. There is no suppression of any kind — a warning is a value
-whose type you have not declared yet, so declare it.
+And `@warning_ignore`. Game code gets no suppression of any kind — a warning is a
+value whose type you have not declared yet, so declare it. A gdUnit4 suite gets the
+two file-wide ignores its fluent asserts force, and nothing else.
 
 ## Run it
 
