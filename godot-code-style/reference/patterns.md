@@ -331,6 +331,37 @@ An idempotency clause is the allowed second form of that guard:
 		return
 ```
 
+A ladder that only picks a value per enum member is not branching, it is data. It
+is a `const Dictionary`, read into a typed local, and gdlint's six-return limit
+keeps it that way:
+
+```gdscript
+const DAMAGE_STEPS: Dictionary[UpgradeTree.Unit, float] = {
+	UpgradeTree.Unit.assault: ASSAULT_DAMAGE_STEP,
+	UpgradeTree.Unit.sniper: SNIPER_DAMAGE_STEP,
+}
+
+
+func damage_step(unit: UpgradeTree.Unit) -> float:
+	var step: float = DAMAGE_STEPS.get(unit, 0.0)
+	return step
+```
+
+A ladder that builds a different class per branch stays a ladder, so each `new()`
+stays typed. It assigns one typed local and returns once:
+
+```gdscript
+func _new_unit(unit_class: StringName) -> Units:
+	var unit: Units = null
+	if unit_class == &"Assault":
+		unit = Assault.new()
+	elif unit_class == &"Sniper":
+		unit = Sniper.new()
+	else:
+		unit = SquadLeader.new()
+	return unit
+```
+
 ## `_physics_process` vs `_process`
 
 | Kind of logic | Callback |

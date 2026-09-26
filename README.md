@@ -97,7 +97,7 @@ gdlint scripts/ tests/
 godot --headless tests/verify.tscn --quit-after 400   # 3971 checks, exit 0 = pass
 ```
 
-All 23 GDScript warnings are set to **error**, including `untyped_declaration`,
+23 of Godot's 49 GDScript warnings are set to **error**, including `untyped_declaration`,
 `inferred_declaration` and all five `unsafe_*` checks. The project refuses to run if
 one fires, and there is not a single suppression in it.
 

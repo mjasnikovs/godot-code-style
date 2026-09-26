@@ -10,7 +10,7 @@ gdlint scripts/ tests/
 godot --headless tests/verify.tscn --quit-after 400
 ```
 
-`project.godot` sets all 23 GDScript warnings to level 2, which makes them errors. A
+`project.godot` sets 23 GDScript warnings to level 2, which makes them errors. A
 silent launch proves that for every script the main scene reaches, and no more. The
 self-test loads every script in `scripts/`, so an unreached one fails there instead.
 There are no suppressions anywhere.

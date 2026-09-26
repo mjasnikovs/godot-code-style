@@ -121,6 +121,18 @@ config with `gdlint -d`; this short file is the whole thing.
 Each of these six lines widens a rule to accept the form the style already requires.
 None of them turns a check off. The `disable:` list stays empty.
 
+Three defaults decide how big things get, and the style keeps all three:
+
+| Rule | Limit | How the style meets it |
+|---|---|---|
+| `max-returns` | 6 | a branch that picks a value is a `const Dictionary` lookup; one that builds an object assigns a typed local and returns once (`patterns.md`, 8) |
+| `max-public-methods` | 20 | a signal emitter only its own class calls is `_`-prefixed; past that, the class splits by concern |
+| `max-file-lines` | 1000 | a self-contained group of helpers moves into its own `RefCounted` class, held in a typed member |
+
+Raising one in `.gdlintrc` is the same move as lowering a warning: it hides the
+code from the rule. Measured on a 96-script project that had set `max-returns: 10`:
+seven if-ladders over an enum sat behind it.
+
 ### Run it from the project root
 
 `gdlint` searches for its config **upward from the current directory**, not from the

@@ -144,7 +144,8 @@ These are the decisions that repeat. Full form and rationale in
 | 7 | Config data | `const Dictionary` blob, never a `Resource` subclass |
 | 8 | Branching on a state | `if` / `elif` / `else`, never `match` |
 
-Three rules ride along with them. Physics belongs in `_physics_process`; visual, UI
+A ladder that only picks a value per enum member is a `const Dictionary` instead
+(`reference/patterns.md`, 8). Three rules ride along with them. Physics belongs in `_physics_process`; visual, UI
 and timing logic belongs in `_process`. Negation is `!`, not `not`. And **no method is
 ever called through `owner` or `get_parent()`** — both are typed `Node`, so the call
 is unsafe by construction. Take an `@export` reference to the real class instead:
