@@ -373,7 +373,8 @@ func _new_unit(unit_class: StringName) -> Units:
 | Kind of logic | Callback |
 |---|---|
 | character and projectile movement, collisions | `_physics_process(delta: float)` |
-| camera, UI, timers, visual effects, day/night | `_process(delta: float)` |
+| a camera following a physics body | `_physics_process(delta: float)`, on the clock of what it follows |
+| UI, timers, visual effects, day/night | `_process(delta: float)` |
 
 Both take a typed `delta` and decay their buffers with it.
 
