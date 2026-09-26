@@ -1,5 +1,6 @@
 class_name HitBox extends Area2D
 
+@export_category("Nodes")
 @export var character: Character
 
 var damage: int = 10

@@ -22,7 +22,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if !_spawning:
 		return
-	_spawn_time = max(0, _spawn_time - delta)
+	_spawn_time = maxf(0.0, _spawn_time - delta)
 	if _spawn_time > 0:
 		return
 	_spawn_time = SPAWN_TIME

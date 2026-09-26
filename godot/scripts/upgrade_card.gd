@@ -12,6 +12,7 @@ const MAGNUM_1: Dictionary = {
 	"packed_scene": preload("res://scenes/bullet.tscn")
 }
 
+@export_category("Nodes")
 @export var title: Label
 @export var description: Label
 

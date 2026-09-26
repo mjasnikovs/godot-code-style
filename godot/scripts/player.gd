@@ -30,7 +30,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	super(delta)
-	jump_buffer_time = max(0, jump_buffer_time - delta)
+	jump_buffer_time = maxf(0.0, jump_buffer_time - delta)
 	on_floor = is_on_floor()
 
 	if Input.is_action_just_pressed(&"button_a"):

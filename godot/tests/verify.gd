@@ -156,6 +156,7 @@ func verify_declarations(sources: Dictionary) -> void:
 
 
 func verify_prohibited(sources: Dictionary) -> void:
+	var untyped_math: RegEx = RegEx.create_from_string("(?<![\\w.])(max|min|clamp|lerp|abs|sign)\\(")
 	for file_name: String in sources.keys():
 		var raw: String = sources[file_name]
 		var text: String = strip_noise(raw)
@@ -171,6 +172,9 @@ func verify_prohibited(sources: Dictionary) -> void:
 		for keyword: String in ["if not ", "and not ", "or not ", "while not ", "return not "]:
 			check(!text.contains(keyword), "negation uses ! not the not keyword: " + file_name)
 		check(!text.contains("class Inner"), "no inner classes: " + file_name)
+		check(untyped_math.search(text) == null, "typed math helpers, maxf and clampi not max and clamp: " + file_name)
+		if text.contains("@export var"):
+			check(text.contains("@export_category("), "exports are grouped under @export_category: " + file_name)
 
 		for line: String in text.split("\n"):
 			var trimmed: String = line.strip_edges()
@@ -300,8 +304,8 @@ func verify_node_access(sources: Dictionary) -> void:
 			if !trimmed.begins_with("@onready"):
 				continue
 			check(
-				trimmed.contains("preload(") or trimmed.contains(".new(") or trimmed.contains("["),
-				"@onready is a preload or a derived value, never a node grab: " + file_name + " " + trimmed
+				!trimmed.contains("preload(") and (trimmed.contains(".new(") or trimmed.contains("[")),
+				"@onready is a derived value, never a preload or a node grab: " + file_name + " " + trimmed
 			)
 
 
@@ -352,11 +356,11 @@ func verify_buffers() -> void:
 	if !player:
 		return
 	player.jump_buffer_time = 0.05
-	player.jump_buffer_time = max(0, player.jump_buffer_time - 0.2)
+	player.jump_buffer_time = maxf(0.0, player.jump_buffer_time - 0.2)
 	check(player.jump_buffer_time == 0.0, "a buffer floors at zero, never goes negative")
 
 	player.knockback_buffer_time = 0.2
-	player.knockback_buffer_time = max(0, player.knockback_buffer_time - 0.05)
+	player.knockback_buffer_time = maxf(0.0, player.knockback_buffer_time - 0.05)
 	check(is_equal_approx(player.knockback_buffer_time, 0.15), "a buffer decays by delta")
 
 

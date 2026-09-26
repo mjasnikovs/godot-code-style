@@ -10,7 +10,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	reload_time = max(0, reload_time - delta)
+	reload_time = maxf(0.0, reload_time - delta)
 
 
 func fire() -> void:

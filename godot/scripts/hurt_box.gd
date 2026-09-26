@@ -1,5 +1,6 @@
 class_name HurtBox extends Area2D
 
+@export_category("Nodes")
 @export var character: Character
 
 

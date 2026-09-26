@@ -67,7 +67,7 @@ lambdas. Layout is whatever `gdformat` writes.
 |---|---|---|
 | 1 | Reacting to a signal | inline `connect(func(...) -> void: ...)` — never an `_on_*` method |
 | 1b | Emitting a signal | a typed method that calls `emit` — `emit` itself is unchecked varargs |
-| 2 | A countdown | `float` seconds, `v = max(0, v - delta)` each frame |
+| 2 | A countdown | `float` seconds, `v = maxf(0.0, v - delta)` each frame |
 | 3 | A delay inside a function | `await get_tree().create_timer(d).timeout` |
 | 4 | A delay that outlives the call | local `Timer.new()`, `autostart` + `one_shot` |
 | 5 | Reaching another system | through the global-state autoload |

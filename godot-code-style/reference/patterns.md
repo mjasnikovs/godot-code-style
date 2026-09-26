@@ -89,9 +89,9 @@ wiring and the editor silently owns the connection.
 ```gdscript
 	var _error: int = self.area_entered.connect(
 		func(hitbox: HitBox) -> void:
-			if hitbox == null or parent_hit_box == hitbox:
+			if !hitbox or parent_hit_box == hitbox:
 				return
-			...
+			take_hit(hitbox)
 	)
 ```
 
@@ -107,12 +107,12 @@ Cooldowns, i-frames, recoil, knockback, input buffers. All of them are a `float`
 seconds, decayed every frame, treated as active while positive.
 
 ```gdscript
-	jump_block_time = max(0, jump_block_time - delta)
+	jump_block_time = maxf(0.0, jump_block_time - delta)
 ```
 
 ```gdscript
 	if knockback_buffer_time > 0:
-		...
+		return
 ```
 
 To trigger one, set it to its `*_BUFFER_TIME` const. Prefer this over a `Timer` node
@@ -159,14 +159,12 @@ delay failed four call sites, and awaiting it would have held `take_damage` open
 until the body was gone.
 
 ```gdscript
-	var time: Timer = Timer.new()
-	time.autostart = true
-	time.one_shot = true
-	time.wait_time = 3
-	var _error: int = time.timeout.connect(
-		func() -> void:
-			...
-	)
+	var fuse: Timer = Timer.new()
+	fuse.autostart = true
+	fuse.one_shot = true
+	fuse.wait_time = 3.0
+	var _error: int = fuse.timeout.connect(func() -> void: explode())
+	add_child(fuse)
 ```
 
 Do not put these in the scene tree as editor `Timer` nodes. A timer that exists for
@@ -469,19 +467,20 @@ needed, such as camera shake noise that must not perturb gameplay rolls.
 
 Use the built-ins. Do not write math helpers.
 
-- `lerp` for interpolation.
-- `clamp` for bounds.
-- `max(0, v - delta)` for buffer decay.
+- `lerpf` for interpolation.
+- `clampf` / `clampi` for bounds.
+- `maxf(0.0, v - delta)` for buffer decay.
 - `Vector2` for positions and sizes — never `Vector2i`.
 
 One vector type means no int/float conversion at any boundary. Godot's own
-APIs — `position`, `lerp`, the physics calls — are all `Vector2`. Mixing the
+APIs — `position`, `Vector2.lerp`, the physics calls — are all `Vector2`. Mixing the
 two forces casts and rounding bugs.
 
 ## Error output
 
 `printerr` for genuine runtime errors: invariant violations, a missing required
-method, unreachable state.
+method, unreachable state. The one other use is a test harness reporting a failure
+(`SKILL.md`, the test rule).
 
 ```gdscript
 	printerr("Spawner: " + self.name + " ran out of spawn points with budget left.")

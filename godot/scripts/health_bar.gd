@@ -2,13 +2,14 @@ class_name HealthBar extends Control
 
 const DRAIN_SPEED: float = 40.0
 
+@export_category("Nodes")
 @export var label: Label
 
 var max_value: int = 100
 var displayed: float = 100.0
 var value: int = 100:
 	set(new_value):
-		value = clamp(new_value, 0, max_value)
+		value = clampi(new_value, 0, max_value)
 		return new_value
 
 

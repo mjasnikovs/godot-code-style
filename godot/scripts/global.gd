@@ -1,7 +1,7 @@
 extends Node
 
 # Autoloads omit class_name: they are reached by their registration name.
-# This is the only script allowed to hold raw scene-tree paths.
+# Owners register themselves here in their own _ready; no script holds a scene path.
 
 var world: Node2D = null
 var player: Player = null

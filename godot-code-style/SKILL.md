@@ -137,7 +137,7 @@ These are the decisions that repeat. Full form and rationale in
 |---|---|---|
 | 1 | Reacting to a signal | inline `connect(func(...) -> void: ...)` — never an `_on_*` method |
 | 1b | Emitting a signal | a typed method that calls `emit` — `emit` itself is unchecked varargs |
-| 2 | A countdown (cooldown, i-frames, buffer) | `float` seconds, `v = max(0, v - delta)` each frame, used while `v > 0` |
+| 2 | A countdown (cooldown, i-frames, buffer) | `float` seconds, `v = maxf(0.0, v - delta)` each frame, used while `v > 0` |
 | 3 | A one-shot delay inside a function | `await get_tree().create_timer(d).timeout` |
 | 4 | A one-shot delay that outlives the call | local `Timer.new()` with `autostart` + `one_shot` |
 | 5 | Reaching another system | through the global-state autoload's refs |
@@ -249,8 +249,16 @@ none of it.
 
 Everything else in this style holds in test suites too. Two more gdUnit4 needs are
 allowed: a fuzzer parameter keeps `:=`, and a test reaches a node of the scene
-under test with `runner.find_child(...)`. A suite omits `class_name`; gdUnit4
-finds it by path. `print` stays out: a failed assert is the report.
+under test with `runner.find_child(...)`, and it may emit an engine signal the
+scene declares, such as a `Button`'s `pressed`, to stand in for the input. A suite
+omits `class_name`; gdUnit4 finds it by path. `print` stays out: a failed assert is
+the report.
+
+A test harness that is not a gdUnit4 suite — a self-test scene — follows one rule. It
+prints nothing on a pass. On a failure it prints each one with `printerr` and quits
+with exit code 1. Its CI step fails on any output other than the engine banner, or on
+a non-zero exit, because a harness that fails to parse prints the error and still
+exits 0.
 
 A warning is the type system telling you it lost track of a value. Silencing it keeps
 the ignorance and hides it. Fix the cause instead:
@@ -263,8 +271,9 @@ the ignorance and hides it. Fix the cause instead:
 | `unused_signal` | delete the signal, or emit it |
 | `return_value_discarded` | assign it to a typed `_`-prefixed throwaway |
 | `unused_parameter` | prefix it `_` |
+| `unused_variable` | prefix it `_` — a loop counter nobody reads is `for _i: int in range(n):` |
 
-The last two rows are the only escape hatches, and both change the code rather than
+The last three rows are the only escape hatches, and all three change the code rather than
 muting the compiler. A `_`-prefixed identifier is exempt from the unused warnings, so
 a return you genuinely do not want gets a name and a type anyway. Declare one
 throwaway per type per scope and reuse it:
@@ -298,7 +307,13 @@ Not "discouraged". These do not appear.
 - calling a method through `owner`, `get_parent()` or any other `Node`-typed reference
 - single-quoted strings
 - any function named `_on_*`, including editor-generated `_on_<signal>` handlers
-- `print(...)` in committed code — `printerr` is the error channel
+- a method reference passed to `connect` — every connection is a lambda
+- a signal connection saved in a scene (`[connection]` in a `.tscn`); scripts connect
+  their own signals in `_ready`
+- `max`, `min`, `clamp`, `lerp`, `abs`, `sign` — use the typed `maxf` / `maxi`,
+  `clampf` / `clampi`, `lerpf` and the rest, so no Variant comes back
+- `print(...)` in committed code, tests included — `printerr` is for genuine errors
+  and for a harness's failures
 - picking a node out of the tree by position — `$Path`, `%UniqueName`, `get_node(...)`,
   `has_node(...)`, `find_child(...)`, `find_children(...)`, `get_child(i)`, a
   `NodePath(...)` literal, and any `@onready` wrapping one. A placed node is reached

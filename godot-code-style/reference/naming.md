@@ -55,7 +55,8 @@ State mutation takes a `set_` prefix. When a mutator needs a variant that skips 
 guard, name it `force_*`:
 
 - `set_state(state)` respects the block check.
-- `force_state(state)` bypasses it, and has exactly one caller.
+- `force_state(state)` bypasses it. Two callers only: the animation-finished reset,
+  and damage that must land whatever the state.
 
 ## Constants
 
@@ -204,7 +205,7 @@ A clamping setter follows the same shape:
 var min_value: int = 0:
 	set(new_value):
 		min_value = new_value
-		value = clamp(value, min_value, max_value)
+		value = clampi(value, min_value, max_value)
 		update_shells()
 		return new_value
 ```

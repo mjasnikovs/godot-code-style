@@ -1,5 +1,6 @@
 class_name ScreenFlash extends CanvasLayer
 
+@export_category("Nodes")
 @export var rect: ColorRect
 
 var tween: Tween = null

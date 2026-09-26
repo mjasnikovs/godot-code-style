@@ -12,7 +12,7 @@ var knockback_buffer_time: float = 0.0
 
 
 func _physics_process(delta: float) -> void:
-	knockback_buffer_time = max(0, knockback_buffer_time - delta)
+	knockback_buffer_time = maxf(0.0, knockback_buffer_time - delta)
 
 
 func take_damage(_damage: int, _direction: Direction) -> void:

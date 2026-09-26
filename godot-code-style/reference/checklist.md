@@ -71,7 +71,9 @@ block then looks present while nothing enforces it. `godot/tests/verify.gd` chec
 all 49 at the real key, and fails on a headerless twin.
 
 That is every warning Godot 4.7.2 has, in the order the engine lists them. Four
-ship as errors already; they are written out so the block states the whole rule.
+ship as errors already; they are written out so the block states the whole rule. The
+editor drops those four lines the next time it saves `project.godot`, because they
+equal the default. They still read 2.
 
 Six of them make the typing self-enforcing. `untyped_declaration` and
 `inferred_declaration` together outlaw both `var x = 1` and `var x := 1`. The four
@@ -166,8 +168,8 @@ seven if-ladders over an enum sat behind it.
 ### Run it from the project root
 
 `gdlint` searches for its config **upward from the current directory**, not from the
-file being linted. Run it from anywhere else and it silently uses defaults, and a
-correct file reports 18 errors.
+file being linted. Run it from anywhere else and it silently uses defaults: measured,
+this project's correct `scripts/` then reports 24 errors, 10 of them in `player.gd`.
 
 ```sh
 cd <project root>
@@ -257,9 +259,12 @@ autoload. It does not register autoloads, so every script that names one fails w
 - [ ] A SCREAMING `var` exists only for a genuinely per-instance value, bounded by
       `MIN_`/`MAX_` consts.
 - [ ] Every `const`, `var`, parameter, local, `for` variable and lambda parameter is
-      explicitly typed. Every function ends in `-> Type`, including `-> void`.
+      explicitly typed. Every function ends in `-> Type`, including `-> void`. The one
+      untyped parameter is a setter's: Godot 4.7.2 refuses `set(value: int)`, and
+      takes the type from the property.
+- [ ] Math through the typed helpers: `maxf`, `mini`, `clampf`, `lerpf`, never `max`.
 - [ ] `gdformat --check` is clean with `line_length: 120`. Tabs, not spaces.
-- [ ] Exports grouped with `@export_category` and every one asserted in `_ready` with
+- [ ] Every export sits under an `@export_category`, a single one included, and every one asserted in `_ready` with
       the `"<file>.gd - @export <name> is not set in the editor on: " + self.name`
       message. Value exports (`int`, `float`, `bool`, `String`) are not asserted.
 - [ ] Every signal is emitted from a typed method on its declaring class, never by a
@@ -272,7 +277,7 @@ autoload. It does not register autoloads, so every script that names one fails w
       `instantiate()` or `.new()` returned. `get_children()` stays allowed.
 - [ ] Cross-scene references go through the global-state autoload, and each owner
       registers itself there in its own `_ready`.
-- [ ] Countdowns decay with `max(0, v - delta)` each frame and are guarded by
+- [ ] Countdowns decay with `maxf(0.0, v - delta)` each frame and are guarded by
       `if v > 0:`.
 - [ ] Characters and projectiles in `_physics_process`; visual, UI and timing in
       `_process`.
@@ -291,7 +296,8 @@ autoload. It does not register autoloads, so every script that names one fails w
       or `##` doc-comments.
 - [ ] No `@tool` unless the user approved it for that script. An approved one guards
       every game-only function with an `if Engine.is_editor_hint():` guard.
-- [ ] No `print(...)`, tests included. `printerr` for genuine errors.
+- [ ] No `print(...)`, tests included. `printerr` for genuine errors and a harness's
+      failures; a harness is silent on a pass.
 - [ ] No method called through `owner` or `get_parent()`. Typed `@export` reference to
       a real class instead, with a shared base class where a family needs one.
 - [ ] Every `await` followed by a node access has an `is_instance_valid(self)` guard.
