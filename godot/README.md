@@ -19,5 +19,5 @@ There are no suppressions anywhere.
 does not. Most checks read the scripts back as text and assert the style holds —
 declaration shape, typing, tabs, line length, assert messages, no prohibited
 construct. Member order and naming are `gdlint`'s job. The rest exercise the runtime behaviour: the
-state machine's blocked states, buffer decay, the clamping setter, the config
+state machine's blocked states, the buffers decaying through the physics tick, the clamping setter, the config
 boundary, and typed damage through the base class.

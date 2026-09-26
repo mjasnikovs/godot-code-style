@@ -152,9 +152,8 @@ replace — `trailing-whitespace`, `unnecessary-pass`, `unused-argument`,
 config with `gdlint -d`; this short file is the whole thing.
 
 Two of these lines narrow a rule to the one form the style allows. Two widen a
-rule to accept a form the style requires, and the order list moves the signals and
-the `@onready` vars. None
-of them turns a check off. The `disable:` list stays empty.
+rule to accept a form the style requires, the line length widens 100 to 120, and the
+order list moves the signals and the `@onready` vars. None of them turns a check off. The `disable:` list stays empty.
 
 Three defaults decide how big things get, and the style keeps all three:
 
@@ -288,8 +287,8 @@ autoload. It does not register autoloads, so every script that names one fails w
       registers itself there in its own `_ready`.
 - [ ] Countdowns decay with `maxf(0.0, v - delta)` each frame and are guarded by
       `if v > 0:`.
-- [ ] Characters and projectiles in `_physics_process`; visual, UI and timing in
-      `_process`.
+- [ ] Characters, projectiles and a camera following one in `_physics_process`; other
+      visual, UI and timing logic in `_process`.
 - [ ] Signals wired with inline `connect(func(...) -> void: ...)`. No `_on_*` handlers.
 - [ ] One-shot timers are a local `Timer.new()` with `autostart` and `one_shot`.
       In-function waits use `await`.

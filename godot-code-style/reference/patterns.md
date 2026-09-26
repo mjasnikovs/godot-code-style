@@ -151,8 +151,9 @@ suite or a self-test harness is not freed while it waits, so it carries none.
 
 ## 4. The ad-hoc `Timer`
 
-For a delay that must outlive the call — a fuse, a spawn delay, a projectile
-lifetime, a body that fades before it frees — create a local `Timer`, one per delay.
+For a delay that must outlive the call — a fuse, a projectile lifetime, a body that
+fades before it frees — create a local `Timer`, one per delay. A delay checked every
+tick, such as a spawn interval, is a countdown (2) instead.
 
 Never an `await` in its place. A function that awaits is a coroutine, and with
 `missing_await` at 2 every caller has to await it too, which makes the caller wait
@@ -179,7 +180,7 @@ is not a lookup — `instantiate()` and `.new()` hand you the reference directly
 you keep it in a typed local or member. That is always allowed.
 
 ```gdscript
-	var instance: Enemy = enemy.instantiate()
+	var instance: Enemy = ENEMY_SCENE.instantiate()
 	Global.world.call_deferred(&"add_child", instance)
 ```
 
@@ -544,9 +545,6 @@ func _ready() -> void:
 is where `HitBox` is asserted. A lambda typed `HitBox` compiles and then raises at
 runtime on the first other area that enters.
 
-```gdscript
-```
-
 The base method has a `pass` body because `@abstract` is not used, and its parameters
 take a leading `_` because a `pass` body never reads them. The assert is what
 catches a missing wiring, so the old "owner has no take_damage method" `printerr` is
@@ -580,7 +578,7 @@ hook that reads like a signal handler defeats the point of the ban.
 | Kind | Shape |
 |---|---|
 | **Autoload** | no `class_name`; `extends Node`; the only holder of cross-scene node refs and cross-scene signals |
-| **UI** | `Control` subclass; typed `for` over `get_children()`, never `get_child(i)`; `@export` refs asserted; values decay with `maxf(0.0, ...)` |
+| **UI** | `Control` subclass; typed `for` over `get_children()`, never `get_child(i)`; `@export` refs asserted; a displayed value eases toward the real one with `move_toward` in `_process` |
 | **Projectile** | `Area2D`; plain `var direction: int` and `damage` set externally, `direction` asserted in `_ready`; lifetime a `const` fed to a local one-shot `Timer` |
 | **Spawner** | `_`-prefixed private state; `@onready` index arrays derived from per-level `@export` arrays |
 | **Throwable** | `RigidBody2D`; throw plus a one-shot `Timer` fuse; `explode()` and a `remove()` that calls `queue_free()` |

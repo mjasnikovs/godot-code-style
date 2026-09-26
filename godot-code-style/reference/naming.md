@@ -112,7 +112,7 @@ A family that shares a facing declares it once, on the shared base class
 enum by qualified name: `Player.State`, `Character.Direction`.
 
 ```gdscript
-func emit(target: Enemy, damage: int, direction: Enemy.Direction) -> void:
+func emit(target: Enemy, damage: int, direction: Character.Direction) -> void:
 ```
 
 **Categorical config** — lowercase members naming a variant:

@@ -147,8 +147,8 @@ These are the decisions that repeat. Full form and rationale in
 | 8 | Branching on a state | `if` / `elif` / `else`, never `match` |
 
 A ladder that only picks a value per enum member is a `const Dictionary` instead
-(`reference/patterns.md`, 8). Three rules ride along with them. Physics belongs in `_physics_process`; visual, UI
-and timing logic belongs in `_process`. Negation is `!`, not `not`. And **no method is
+(`reference/patterns.md`, 8). Three rules ride along with them. Physics belongs in `_physics_process`, and so does a
+camera that follows a physics body; other visual, UI and timing logic belongs in `_process`. Negation is `!`, not `not`. And **no method is
 ever called through `owner` or `get_parent()`** — both are typed `Node`, so the call
 is unsafe by construction. Take an `@export` reference to the real class instead:
 
@@ -299,7 +299,8 @@ If a warning cannot be fixed by typing something, the design is wrong — usuall
 
 ## Prohibited
 
-Not "discouraged". These do not appear.
+Not "discouraged". These do not appear in game code; a gdUnit4 suite has the
+exceptions named above, and no others.
 
 - `match` statements — use `if` / `elif` / `else`
 - inner classes, `static` functions, `@abstract`, `@icon`

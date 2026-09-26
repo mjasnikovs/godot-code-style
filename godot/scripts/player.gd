@@ -92,11 +92,11 @@ func drop_gold() -> void:
 	Global.world.call_deferred(&"add_child", instance)
 
 
-# emit is varargs and checks nothing, so every signal gets a typed emitter.
-func _report_player_died(who: Player) -> void:
-	player_died.emit(who)
-
-
 func die() -> void:
 	_report_player_died(self)
 	queue_free()
+
+
+# emit is varargs and checks nothing, so every signal gets a typed emitter.
+func _report_player_died(who: Player) -> void:
+	player_died.emit(who)

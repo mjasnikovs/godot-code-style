@@ -376,12 +376,11 @@ func verify_buffers() -> void:
 	if !player:
 		return
 	player.jump_buffer_time = 0.05
-	player.jump_buffer_time = maxf(0.0, player.jump_buffer_time - 0.2)
-	check(player.jump_buffer_time == 0.0, "a buffer floors at zero, never goes negative")
-
 	player.knockback_buffer_time = 0.2
-	player.knockback_buffer_time = maxf(0.0, player.knockback_buffer_time - 0.05)
-	check(is_equal_approx(player.knockback_buffer_time, 0.15), "a buffer decays by delta")
+	player._physics_process(0.05)
+	check(is_equal_approx(player.knockback_buffer_time, 0.15), "a buffer decays by delta in the physics tick")
+	player._physics_process(0.2)
+	check(player.jump_buffer_time == 0.0, "a buffer floors at zero, never goes negative")
 
 
 # --- 9. Typed damage through the base class ----------------------------------

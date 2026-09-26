@@ -1,10 +1,11 @@
 class_name EnemySpawner extends Node2D
 
 const ENEMY_SCENE: PackedScene = preload("res://scenes/enemy.tscn")
-const SPAWN_TIME: float = 2.0
+const SPAWN_BUFFER_TIME: float = 2.0
 
 @export_category("Settings")
 @export var budget: int = 10
+
 @export_category("Nodes")
 @export var spawn_points: Array[Node2D] = []
 
@@ -25,7 +26,7 @@ func _process(delta: float) -> void:
 	_spawn_time = maxf(0.0, _spawn_time - delta)
 	if _spawn_time > 0:
 		return
-	_spawn_time = SPAWN_TIME
+	_spawn_time = SPAWN_BUFFER_TIME
 	spawn()
 
 
