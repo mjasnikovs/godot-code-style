@@ -3,7 +3,7 @@ class_name Character extends CharacterBody2D
 # The shared base that makes take_damage a typed call instead of a duck-typed
 # one through owner. Parameters take a leading _ because the body is pass.
 
-enum Direction {left = -1, right = 1}
+enum Direction { left = -1, right = 1 }
 
 const KNOCKBACK_TIME: float = 0.1
 

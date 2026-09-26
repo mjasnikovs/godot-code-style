@@ -34,7 +34,7 @@ in the guide is what a codebase looks like once that is true.
 ```gdscript
 class_name Player extends CharacterBody2D
 
-enum State {idle, walk, jump, fall, attack, hit}
+enum State { idle, walk, jump, fall, attack, hit }
 
 const blocked_states: Array[State] = [State.attack, State.hit]
 const JUMP_VELOCITY: float = -300.0
@@ -49,13 +49,13 @@ var jump_buffer_time: float = 0.0
 
 func _ready() -> void:
 	assert(animation, "player.gd - @export animation is not set in the editor on: " + self.name)
-	var _error: int = animation.animation_finished.connect(func(_anim_name: StringName) -> void:
-		force_state(State.idle)
+	var _error: int = animation.animation_finished.connect(
+		func(_anim_name: StringName) -> void: force_state(State.idle)
 	)
 ```
 
 Members in one fixed order. Everything typed. Exports asserted. Signals wired as
-lambdas.
+lambdas. Layout is whatever `gdformat` writes.
 
 ## The eight decisions
 
@@ -86,14 +86,15 @@ whose type you have not declared yet, so declare it.
 
 ## Run it
 
-Needs Godot 4.7.2 or newer, and gdtoolkit 4 for the linter.
+Needs Godot 4.7.2 or newer, and gdtoolkit 4.5.0 for `gdformat` and `gdlint`.
 
 ```sh
 cd godot
 godot --headless --import
 godot --headless --quit-after 180            # must print nothing
+gdformat --check scripts/ tests/
 gdlint scripts/ tests/
-godot --headless tests/verify.tscn --quit-after 400   # 3808 checks, exit 0 = pass
+godot --headless tests/verify.tscn --quit-after 400   # 3971 checks, exit 0 = pass
 ```
 
 All 23 GDScript warnings are set to **error**, including `untyped_declaration`,
@@ -108,6 +109,8 @@ one fires, and there is not a single suppression in it.
 | every `@export` asserted in `_ready` | only node and resource exports; `assert(budget)` rejects a legitimate zero |
 | a base-class hook named `_on_ready()` | `_setup()` — the style bans every `func _on_*` name, including its own hook |
 | `Global.enemy_died.emit(self)` from a caller | `Global.report_enemy_died(self)` — `unused_signal` only counts uses inside the declaring class, and `emit` type-checks nothing |
+| formatted by hand, `gdformat` banned | `gdformat` at 120 owns layout — the claim that it splits `class_name X extends Y` was false on 4.5.0 |
+| a launch that prints nothing proves every script compiles | it proves only the scripts the main scene reaches; the self-test now loads every one |
 
 ## Read it
 
@@ -119,7 +122,7 @@ one fires, and there is not a single suppression in it.
   the eight decisions in full, plus tweens, `await`, `call_deferred`, randomness,
   `preload` vs `load`, script archetypes.
 - [godot-code-style/reference/checklist.md](godot-code-style/reference/checklist.md) —
-  the `project.godot` warning block, `.gdlintrc`, the headless check, the pre-commit
+  the `project.godot` warning block, `.gdlintrc`, `.gdformatrc`, the headless check, the pre-commit
   checklist, and how to review an existing file.
 
 ## Use it as an Agent Skill

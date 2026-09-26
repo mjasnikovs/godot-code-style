@@ -13,7 +13,9 @@ var _spawn_time: float = 0.0
 
 
 func _ready() -> void:
-	assert(!spawn_points.is_empty(), "enemy_spawner.gd - @export spawn_points is not set in the editor on: " + self.name)
+	assert(
+		!spawn_points.is_empty(), "enemy_spawner.gd - @export spawn_points is not set in the editor on: " + self.name
+	)
 	_spawning = true
 
 
@@ -29,8 +31,10 @@ func spawn() -> void:
 
 
 func _process(delta: float) -> void:
-	if !_spawning: return
+	if !_spawning:
+		return
 	_spawn_time = max(0, _spawn_time - delta)
-	if _spawn_time > 0: return
+	if _spawn_time > 0:
+		return
 	_spawn_time = SPAWN_TIME
 	spawn()

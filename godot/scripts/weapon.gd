@@ -16,7 +16,8 @@ func _ready() -> void:
 
 
 func fire() -> void:
-	if reload_time > 0: return
+	if reload_time > 0:
+		return
 	reload_time = RELOAD_TIME
 
 

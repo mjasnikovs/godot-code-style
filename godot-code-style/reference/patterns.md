@@ -72,12 +72,8 @@ does not compile.
 Assign it to a typed `_`-prefixed throwaway, declared once per scope and reused:
 
 ```gdscript
-	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void:
-		force_state(State.idle)
-	)
-	_error = self.area_entered.connect(func(hitbox: HitBox) -> void:
-		take_hit(hitbox)
-	)
+	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void: force_state(State.idle))
+	_error = self.area_entered.connect(func(hitbox: HitBox) -> void: take_hit(hitbox))
 ```
 
 **The type is `int`, not `Error`.** `connect` is declared as returning `int`, and
@@ -91,16 +87,18 @@ handler methods do not appear in this style — they scatter the reaction away f
 wiring and the editor silently owns the connection.
 
 ```gdscript
-	self.area_entered.connect(func(hitbox: HitBox) -> void:
-		if hitbox == null or parent_hit_box == hitbox: return
-		...
+	var _error: int = self.area_entered.connect(
+		func(hitbox: HitBox) -> void:
+			if hitbox == null or parent_hit_box == hitbox:
+				return
+			...
 	)
 ```
 
 For one-shot self-cleanup, connect the method directly rather than wrapping it:
 
 ```gdscript
-	audio_player.finished.connect(audio_player.queue_free)
+	_error = audio_player.finished.connect(audio_player.queue_free)
 ```
 
 ## 2. The buffer / decay pattern
@@ -142,7 +140,8 @@ tree again:
 
 ```gdscript
 	await get_tree().create_timer(0.4).timeout
-	if !is_instance_valid(self): return
+	if !is_instance_valid(self):
+		return
 ```
 
 This is the crash that survives review, because it only fires when the timing lines
@@ -158,8 +157,9 @@ lifetime — create a local `Timer`, one per delay.
 	time.autostart = true
 	time.one_shot = true
 	time.wait_time = 3
-	time.timeout.connect(func () -> void:
-		...
+	var _error: int = time.timeout.connect(
+		func() -> void:
+			...
 	)
 ```
 
@@ -310,22 +310,25 @@ dictionary, or a `State` → `Array[String]` map picked from at random.
 
 ## 8. Branching
 
-`if` / `elif` / `else`. `match` does not appear. Guard clauses go at the top, one line
-each, and negation is `!`.
+`if` / `elif` / `else`. `match` does not appear. Guard clauses go at the top, and
+negation is `!`. `gdformat` puts each `return` on its own line.
 
 ```gdscript
-	if !target: return
+	if !target:
+		return
 ```
 
 ```gdscript
 func set_state(state: State) -> void:
-	if blocked_states.has(c_state): return
+	if blocked_states.has(c_state):
+		return
 ```
 
 An idempotency clause is the allowed second form of that guard:
 
 ```gdscript
-	if blocked_states.has(c_state) or state == c_state: return
+	if blocked_states.has(c_state) or state == c_state:
+		return
 ```
 
 ## `_physics_process` vs `_process`
@@ -374,11 +377,12 @@ Self-removal is `queue_free()`. One-shot resources clean themselves up by connec
 their own `finished` signal.
 
 ```gdscript
-func remove() -> void: queue_free()
+func remove() -> void:
+	queue_free()
 ```
 
 ```gdscript
-	audio_player.finished.connect(audio_player.queue_free)
+	_error = audio_player.finished.connect(audio_player.queue_free)
 ```
 
 ## Tweens
@@ -388,10 +392,14 @@ Build with `create_tween()` on the node, or `get_tree().create_tween()`. Chain w
 Parallel tracks use `.set_parallel(true)`.
 
 ```gdscript
-	var tween: Tween = get_tree().create_tween()
-	tween.set_parallel()
-	tween.tween_property(number, "position:y", number.position.y - 20, 0.3).set_ease(Tween.EaseType.EASE_OUT)
+	var tween: Tween = get_tree().create_tween().set_parallel(true)
+	var _step: PropertyTweener = tween.tween_property(number, "position:y", number.position.y - 20, 0.3).set_ease(
+		Tween.EaseType.EASE_OUT
+	)
 ```
+
+Every tween call returns a tweener or the tween itself. Chain it, or keep it in a
+typed `_`-prefixed throwaway, because `return_value_discarded` is an error.
 
 Store a long-running tween in a member and `kill()` the previous one before starting
 its replacement. To wait for a tween, `await` its `.finished`.
@@ -477,10 +485,13 @@ class_name HurtBox extends Area2D
 
 func _ready() -> void:
 	assert(character, "hurt_box.gd - @export character is not set in the editor on: " + self.name)
-	var _error: int = self.area_entered.connect(func(hitbox: HitBox) -> void:
-		if hitbox.character == character: return
-		if hitbox.character is Enemy and character is Enemy: return
-		character.take_damage(hitbox.damage, hitbox.direction)
+	var _error: int = self.area_entered.connect(
+		func(hitbox: HitBox) -> void:
+			if hitbox.character == character:
+				return
+			if hitbox.character is Enemy and character is Enemy:
+				return
+			character.take_damage(hitbox.damage, hitbox.direction)
 	)
 ```
 
@@ -520,4 +531,4 @@ hook that reads like a signal handler defeats the point of the ban.
 | **UI** | `Control` subclass; typed `for` over `get_children()`, never `get_child(i)`; `@export` refs asserted; values decay with `max(0, ...)` |
 | **Projectile** | `Area2D`; plain `var direction: int`, `damage`, `spread`, `lifetime` set externally and asserted in `_ready`; lifetime from a local one-shot `Timer` |
 | **Spawner** | `_`-prefixed private state; `@onready` index arrays derived from per-level `@export` arrays |
-| **Throwable** | `RigidBody2D`; throw plus a one-shot `Timer` fuse; `explode()` and `remove() -> void: queue_free()` |
+| **Throwable** | `RigidBody2D`; throw plus a one-shot `Timer` fuse; `explode()` and a `remove()` that calls `queue_free()` |

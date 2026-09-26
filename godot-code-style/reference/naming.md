@@ -29,7 +29,7 @@ refer to the singleton by its **registration** name; the class name is only for 
 | local `var` | snake_case | `var weapon: Weapon = value.instantiate()` |
 | `func` (public and private) | snake_case | `func set_state(state: State) -> void:` |
 | `enum` type | PascalCase | `enum State {...}` |
-| `enum` member | lowercase | `enum Direction {left = -1, right = 1}` |
+| `enum` member | lowercase | `enum Direction { left = -1, right = 1 }` |
 | `signal` | snake_case, past tense | `signal enemy_died(enemy_node: Enemy)` |
 | private state | `_` prefix | `var _budget: int = 0` |
 
@@ -94,13 +94,13 @@ Three shapes, all declared in-file at the top of the class.
 **State machine** — lowercase, auto-increment, the keys doubling as animation names:
 
 ```gdscript
-enum State {idle, walk, jump, fall, attack, hit, death}
+enum State { idle, walk, jump, fall, attack, hit, death }
 ```
 
 **Direction** — explicit ±1, so the value can be multiplied straight into velocity:
 
 ```gdscript
-enum Direction {left = -1, right = 1}
+enum Direction { left = -1, right = 1 }
 ```
 
 Each class that needs a facing declares its own. Reference another class's enum by
@@ -113,7 +113,7 @@ func emit(target: Enemy, damage: int, direction: Enemy.Direction) -> void:
 **Categorical config** — lowercase members naming a variant:
 
 ```gdscript
-enum Background {red, blue}
+enum Background { red, blue }
 ```
 
 SCREAMING members are the allowed second form for purely categorical phase enums
@@ -213,7 +213,7 @@ No exceptions and no inference.
 - Every parameter is typed, every function has a return type, and void functions
   write `-> void`.
 - `for` loops type the loop variable: `for i: int in range(5):`.
-- Lambda parameters are typed: `func (body: Node2D) -> void:`.
+- Lambda parameters are typed: `func(body: Node2D) -> void:`.
 
 The `project.godot` warning block that enforces this is in `checklist.md`.
 
@@ -256,8 +256,10 @@ Commented-out code does not get committed. Git remembers it.
 
 ## Layout
 
+- `gdformat` at 120 writes the layout: indentation, wrapping, spacing inside enum
+  braces, and a guard's `return` on its own line. Never format by hand.
 - Tabs, one per nesting level. Never spaces.
-- Maximum line length 120, enforced by `.gdlintrc`.
+- Maximum line length 120, set in `.gdformatrc` and enforced by `.gdlintrc`.
 - **Two blank lines between functions.** One blank line between member blocks (the
   `const` block, then the `@export` block, and so on). None inside a function unless
   it separates two genuinely distinct steps.

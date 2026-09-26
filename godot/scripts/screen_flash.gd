@@ -13,15 +13,15 @@ func flash() -> void:
 	if tween:
 		tween.kill()
 	tween = get_tree().create_tween().set_parallel(true)
-	var _step: PropertyTweener = tween.tween_property(rect, "modulate:a", 0.0, 0.3) \
-		.set_ease(Tween.EaseType.EASE_OUT)
+	var _step: PropertyTweener = tween.tween_property(rect, "modulate:a", 0.0, 0.3).set_ease(Tween.EaseType.EASE_OUT)
 
 
 # After an await the node may already be freed. Guard before touching the tree.
 func flash_twice() -> void:
 	flash()
 	await get_tree().create_timer(0.1).timeout
-	if !is_instance_valid(self): return
+	if !is_instance_valid(self):
+		return
 	flash()
 
 

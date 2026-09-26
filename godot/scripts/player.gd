@@ -1,6 +1,6 @@
 class_name Player extends Character
 
-enum State {idle, walk, jump, fall, attack, hit}
+enum State { idle, walk, jump, fall, attack, hit }
 
 const blocked_states: Array[State] = [State.attack, State.hit]
 const SPEED: float = 100.0
@@ -23,8 +23,8 @@ func _ready() -> void:
 	assert(directional, "player.gd - @export directional is not set in the editor on: " + self.name)
 	assert(animation, "player.gd - @export animation is not set in the editor on: " + self.name)
 	Global.register_player(self)
-	var _error: int = animation.animation_finished.connect(func(_anim_name: StringName) -> void:
-		force_state(State.idle)
+	var _error: int = animation.animation_finished.connect(
+		func(_anim_name: StringName) -> void: force_state(State.idle)
 	)
 
 
@@ -34,20 +34,21 @@ func force_state(state: State) -> void:
 
 
 func set_state(state: State) -> void:
-	if blocked_states.has(c_state): return
+	if blocked_states.has(c_state):
+		return
 	c_state = state
 	set_animation()
 
 
 func set_animation() -> void:
 	var new_anim: StringName = State.keys()[c_state]
-	assert(animation.has_animation(new_anim),
-		"player.gd - animation player has no animation named '" + new_anim + "'")
+	assert(animation.has_animation(new_anim), "player.gd - animation player has no animation named '" + new_anim + "'")
 	animation.play(new_anim)
 
 
 func take_damage(damage: int, direction: Direction) -> void:
-	if damage <= 0: return
+	if damage <= 0:
+		return
 	knockback_buffer_time = KNOCKBACK_TIME
 	velocity.x = 60.0 * direction
 	force_state(State.hit)

@@ -50,7 +50,7 @@ func strip_noise(text: String) -> String:
 		var index: int = 0
 		while index < line.length():
 			var character: String = line[index]
-			if character == "\"":
+			if character == '"':
 				in_string = !in_string
 			elif character == "#" and !in_string:
 				break
@@ -66,13 +66,15 @@ func read_scripts() -> Dictionary:
 	var dir: DirAccess = DirAccess.open(SCRIPTS_DIR)
 	assert(dir, "verify.gd - cannot open " + SCRIPTS_DIR)
 	for file_name: String in dir.get_files():
-		if !file_name.ends_with(".gd"): continue
+		if !file_name.ends_with(".gd"):
+			continue
 		var file: FileAccess = FileAccess.open(SCRIPTS_DIR + file_name, FileAccess.READ)
 		out[file_name] = file.get_as_text()
 	return out
 
 
 # --- 1. Declaration and file shape ------------------------------------------
+
 
 func verify_declarations(sources: Dictionary) -> void:
 	for file_name: String in sources.keys():
@@ -82,8 +84,7 @@ func verify_declarations(sources: Dictionary) -> void:
 		if file_name == "global.gd":
 			check(first == "extends Node", "autoload omits class_name: " + file_name)
 			for line: String in text.split("\n"):
-				check(!line.begins_with("class_name "),
-					"autoload declares no class_name: " + file_name)
+				check(!line.begins_with("class_name "), "autoload declares no class_name: " + file_name)
 			continue
 
 		check(first.begins_with("class_name "), "line 1 is a class_name declaration: " + file_name)
@@ -93,11 +94,11 @@ func verify_declarations(sources: Dictionary) -> void:
 		var expected: String = ""
 		for part: String in file_name.replace(".gd", "").split("_"):
 			expected += part.substr(0, 1).to_upper() + part.substr(1)
-		check(declared == expected,
-			"class_name matches filename: " + file_name + " declared " + declared)
+		check(declared == expected, "class_name matches filename: " + file_name + " declared " + declared)
 
 
 # --- 2. Prohibited constructs ------------------------------------------------
+
 
 func verify_prohibited(sources: Dictionary) -> void:
 	for file_name: String in sources.keys():
@@ -126,6 +127,7 @@ func verify_prohibited(sources: Dictionary) -> void:
 
 # --- 2b. Signals are emitted through a typed method ---------------------------
 
+
 func verify_signal_emitters(sources: Dictionary) -> void:
 	for file_name: String in sources.keys():
 		var raw: String = sources[file_name]
@@ -134,26 +136,31 @@ func verify_signal_emitters(sources: Dictionary) -> void:
 		var declared: Array[String] = []
 		for line: String in text.split("\n"):
 			var trimmed: String = line.strip_edges()
-			if !trimmed.begins_with("signal "): continue
+			if !trimmed.begins_with("signal "):
+				continue
 			declared.append(trimmed.split(" ")[1].split("(")[0])
 
 		for signal_name: String in declared:
-			check(text.contains(signal_name + ".emit("),
-				"signal " + signal_name + " is emitted in its own class: " + file_name)
+			check(
+				text.contains(signal_name + ".emit("),
+				"signal " + signal_name + " is emitted in its own class: " + file_name
+			)
 
 		# A caller must never reach through a reference to emit.
 		for line: String in text.split("\n"):
 			var trimmed: String = line.strip_edges()
-			if !trimmed.contains(".emit("): continue
+			if !trimmed.contains(".emit("):
+				continue
 			var target: String = trimmed.split(".emit(")[0].strip_edges()
-			check(!target.contains("."),
-				"emit is called on a local signal, not through a reference: "
-				+ file_name + " " + trimmed)
-			check(declared.has(target),
-				"emit only names a signal this class declares: " + file_name + " " + trimmed)
+			check(
+				!target.contains("."),
+				"emit is called on a local signal, not through a reference: " + file_name + " " + trimmed
+			)
+			check(declared.has(target), "emit only names a signal this class declares: " + file_name + " " + trimmed)
 
 
 # --- 3. Layout ---------------------------------------------------------------
+
 
 func verify_layout(sources: Dictionary) -> void:
 	for file_name: String in sources.keys():
@@ -161,36 +168,40 @@ func verify_layout(sources: Dictionary) -> void:
 		var line_number: int = 0
 		for line: String in text.split("\n"):
 			line_number += 1
-			check(line.length() <= 120,
-				"line <= 120 chars: " + file_name + ":" + str(line_number))
+			check(line.length() <= 120, "line <= 120 chars: " + file_name + ":" + str(line_number))
 			var indent: String = line.substr(0, line.length() - line.lstrip("\t").length())
 			check(!line.begins_with(" "), "tabs not spaces: " + file_name + ":" + str(line_number))
 			check(!indent.contains(" "), "no mixed indent: " + file_name + ":" + str(line_number))
-			check(line == line.rstrip(" \t"),
-				"no trailing whitespace: " + file_name + ":" + str(line_number))
+			check(line == line.rstrip(" \t"), "no trailing whitespace: " + file_name + ":" + str(line_number))
 
 
 # --- 4. Every export is asserted in _ready -----------------------------------
+
 
 func verify_asserts(sources: Dictionary) -> void:
 	for file_name: String in sources.keys():
 		var text: String = sources[file_name]
 		for line: String in text.split("\n"):
 			var trimmed: String = line.strip_edges()
-			if !trimmed.begins_with("@export var"): continue
+			if !trimmed.begins_with("@export var"):
+				continue
 			var export_type: String = trimmed.split(":")[1].strip_edges().split(" ")[0].split("=")[0]
 			# Value exports (int, float, bool, String) carry a default and are not asserted.
 			# Node and resource exports are, because a missing one is a silent null.
 			if export_type in ["int", "float", "bool", "String", "StringName", "Vector2", "Color"]:
 				continue
 			var export_name: String = trimmed.split(" ")[2].split(":")[0]
-			check(text.contains("assert(" + export_name) or text.contains("assert(!" + export_name),
-				"@export " + export_name + " is asserted in " + file_name)
-			check(text.contains(file_name + " - @export " + export_name),
-				"assert message names the file and export: " + file_name + " " + export_name)
+			# gdformat wraps a long assert, so its condition can sit on the next line.
+			var asserted: RegEx = RegEx.create_from_string("assert\\(\\s*!?" + export_name + "\\b")
+			check(asserted.search(text) != null, "@export " + export_name + " is asserted in " + file_name)
+			check(
+				text.contains(file_name + " - @export " + export_name),
+				"assert message names the file and export: " + file_name + " " + export_name
+			)
 
 
 # --- 5. Type annotations -----------------------------------------------------
+
 
 func verify_typing(sources: Dictionary) -> void:
 	for file_name: String in sources.keys():
@@ -207,6 +218,7 @@ func verify_typing(sources: Dictionary) -> void:
 
 # --- 6. Cross-scene access ---------------------------------------------------
 
+
 func verify_node_access(sources: Dictionary) -> void:
 	# %Name is a scene-unique path. Modulo in this style always carries spaces,
 	# so a % glued to an identifier is a path, not arithmetic.
@@ -214,10 +226,11 @@ func verify_node_access(sources: Dictionary) -> void:
 	for file_name: String in sources.keys():
 		var raw: String = sources[file_name]
 		var text: String = strip_noise(raw)
-		check(!text.contains("get_tree().get_root().get_node"),
-			"no raw root grabs outside the autoload: " + file_name)
-		check(!text.contains("owner.take_damage") and !text.contains("get_parent().take_damage"),
-			"no method calls through a Node-typed reference: " + file_name)
+		check(!text.contains("get_tree().get_root().get_node"), "no raw root grabs outside the autoload: " + file_name)
+		check(
+			!text.contains("owner.take_damage") and !text.contains("get_parent().take_damage"),
+			"no method calls through a Node-typed reference: " + file_name
+		)
 		check(!text.contains("$"), "no $ scene paths: " + file_name)
 		check(!unique_name.search(text), "no %UniqueName scene paths: " + file_name)
 		check(!text.contains("get_node("), "no get_node calls: " + file_name)
@@ -229,17 +242,33 @@ func verify_node_access(sources: Dictionary) -> void:
 		check(!text.contains("get_child("), "no get_child(i) index grabs: " + file_name)
 		for line: String in text.split("\n"):
 			var trimmed: String = line.strip_edges()
-			if !trimmed.begins_with("@onready"): continue
-			check(trimmed.contains("preload(") or trimmed.contains(".new(") or trimmed.contains("["),
-				"@onready is a preload or a derived value, never a node grab: " + file_name + " " + trimmed)
+			if !trimmed.begins_with("@onready"):
+				continue
+			check(
+				trimmed.contains("preload(") or trimmed.contains(".new(") or trimmed.contains("["),
+				"@onready is a preload or a derived value, never a node grab: " + file_name + " " + trimmed
+			)
+
+
+# --- 6b. Every script compiles ------------------------------------------------
+
+
+# A headless launch parses only the scripts the main scene reaches. Loading each one
+# here covers the rest, with the autoload registered so a reference to it resolves.
+func verify_compiles(sources: Dictionary) -> void:
+	for file_name: String in sources.keys():
+		var script: GDScript = load(SCRIPTS_DIR + file_name)
+		check(script != null and script.can_instantiate(), "script compiles: " + file_name)
 
 
 # --- 7. The state machine actually behaves -----------------------------------
 
+
 func verify_state_machine() -> void:
 	var player: Player = Global.player
 	check(player != null, "the autoload holds the player reference")
-	if !player: return
+	if !player:
+		return
 
 	check(Player.Direction.left == -1, "Direction.left is -1")
 	check(Player.Direction.right == 1, "Direction.right is 1")
@@ -257,15 +286,16 @@ func verify_state_machine() -> void:
 
 	for state: Player.State in Player.State.values():
 		var anim_name: StringName = Player.State.keys()[state]
-		check(player.animation.has_animation(anim_name),
-			"every enum key has an animation: " + anim_name)
+		check(player.animation.has_animation(anim_name), "every enum key has an animation: " + anim_name)
 
 
 # --- 8. Buffers decay --------------------------------------------------------
 
+
 func verify_buffers() -> void:
 	var player: Player = Global.player
-	if !player: return
+	if !player:
+		return
 	player.jump_buffer_time = 0.05
 	player.jump_buffer_time = max(0, player.jump_buffer_time - 0.2)
 	check(player.jump_buffer_time == 0.0, "a buffer floors at zero, never goes negative")
@@ -276,6 +306,7 @@ func verify_buffers() -> void:
 
 
 # --- 9. Typed damage through the base class ----------------------------------
+
 
 func verify_damage() -> void:
 	var enemy: Enemy = Enemy.new()
@@ -288,6 +319,7 @@ func verify_damage() -> void:
 
 
 # --- 10. The config boundary --------------------------------------------------
+
 
 func verify_config_boundary() -> void:
 	var card: UpgradeCard = UpgradeCard.new()
@@ -308,6 +340,7 @@ func verify_config_boundary() -> void:
 
 # --- 11. Setters clamp --------------------------------------------------------
 
+
 func verify_setter() -> void:
 	var bar: HealthBar = HealthBar.new()
 	var label: Label = Label.new()
@@ -323,6 +356,7 @@ func verify_setter() -> void:
 
 # --- 12. preload constants ----------------------------------------------------
 
+
 func verify_preloads() -> void:
 	check(Player.gold is PackedScene, "a preload const is a PackedScene")
 	check(MagnumWeapon.bullet is PackedScene, "a weapon preload const is a PackedScene")
@@ -330,6 +364,7 @@ func verify_preloads() -> void:
 
 
 # --- 13. the warning block ----------------------------------------------------
+
 
 # The section header is part of the key. `gdscript/warnings/x` under `[gdscript]`
 # is a setting Godot accepts, stores and never reads, so the block reads as present
@@ -340,8 +375,7 @@ func verify_warning_settings() -> void:
 		check(ProjectSettings.has_setting(key), "warning is set at its real key: " + key)
 		var level: int = ProjectSettings.get_setting(key, 0)
 		check(level == 2, "warning is an error, not a warning: " + key)
-		check(!ProjectSettings.has_setting("gdscript/warnings/" + name),
-			"no headerless twin of the warning: " + name)
+		check(!ProjectSettings.has_setting("gdscript/warnings/" + name), "no headerless twin of the warning: " + name)
 
 
 func _ready() -> void:
@@ -355,6 +389,7 @@ func _ready() -> void:
 	verify_asserts(sources)
 	verify_typing(sources)
 	verify_node_access(sources)
+	verify_compiles(sources)
 	verify_state_machine()
 	verify_buffers()
 	verify_damage()

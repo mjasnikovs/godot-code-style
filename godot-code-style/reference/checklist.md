@@ -136,9 +136,33 @@ gdlint scripts/
 one file, where review can see it. A per-line `# gdlint:ignore=` hides one violation
 from that declaration, and stays banned. Same line as `@warning_ignore`.
 
-`gdformat` is not part of this style. It splits `class_name X extends Y` onto two
-lines, among other reflows the rules above do not ask for. Format by hand and let
-`gdlint` catch the line length.
+## `.gdformatrc`
+
+`gdformat` owns the layout. Put this next to `.gdlintrc`:
+
+```yaml
+line_length: 120
+```
+
+Without it `gdformat` wraps at 100, and a line this style allows gets split. A
+partial config merges with the defaults, like `.gdlintrc`. Like `gdlint`, it finds
+the file by searching upward from the current directory, so run it from the
+project root.
+
+```sh
+gdformat scripts/            # rewrite
+gdformat --check scripts/    # CI: exit 1 if any file would change
+```
+
+What it changes, measured on gdtoolkit 4.5.0 against this style's own project:
+
+- A guard's `return` moves to its own line: `if !target:` then `return`.
+- Enum braces get inner spaces: `enum Direction { left = -1, right = 1 }`.
+- A lambda that fits on one line is joined to one line. One that does not is
+  wrapped with `func(...)` on its own line inside the call.
+- `class_name X extends Y` stays on one line.
+
+Its output passes `gdlint` with the config above and compiles under all 23 errors.
 
 ### An overridable method's parameters take a `_`
 
@@ -153,19 +177,28 @@ func take_damage(_damage: int, _direction: Direction) -> void:
 
 ## Headless check
 
-A silent launch is the test. Every warning is an error, so any script problem prints.
+A silent launch is the first test. Every warning is an error, so a broken script prints.
 
 ```sh
 godot --headless --import
-godot --headless --quit-after 120
+godot --headless --quit-after 180
 ```
 
 Anything on stdout beyond the engine banner is a failure. In CI:
 
 ```sh
-output=$(godot --headless --quit-after 120 2>&1 | grep -v '^Godot Engine' || true)
+output=$(godot --headless --quit-after 180 2>&1 | grep -v '^Godot Engine' || true)
 if [ -n "$output" ]; then echo "$output"; exit 1; fi
 ```
+
+It only parses the scripts the main scene reaches. Measured on 4.7.2: an untyped
+script nothing loads printed nothing, and the step passed. So the project also
+loads every script by path and checks `can_instantiate()` — `godot/tests/verify.gd`
+does it with the autoload registered.
+
+Do not use `godot --check-only --script <file>` for this in a project with an
+autoload. It does not register autoloads, so every script that names one fails with
+`Identifier not found`.
 
 ## Pre-commit checklist
 
@@ -179,7 +212,7 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
       `MIN_`/`MAX_` consts.
 - [ ] Every `const`, `var`, parameter, local, `for` variable and lambda parameter is
       explicitly typed. Every function ends in `-> Type`, including `-> void`.
-- [ ] Tabs, not spaces. Lines ≤ 120.
+- [ ] `gdformat --check` is clean with `line_length: 120`. Tabs, not spaces.
 - [ ] Exports grouped with `@export_category` and every one asserted in `_ready` with
       the `"<file>.gd - @export <name> is not set in the editor on: " + self.name`
       message. Value exports (`int`, `float`, `bool`, `String`) are not asserted.
@@ -203,13 +236,14 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
 - [ ] Cleanup via `queue_free()`. Post-frame cross-object calls via `call_deferred`.
 - [ ] No `@warning_ignore`, `@warning_ignore_start`, `# warning-ignore:` or
       `# gdlint:ignore=` anywhere, and no warning lowered below `2` in `project.godot`.
+      gdUnit4 test suites are the one exception, as the SKILL says.
 - [ ] Every `Variant` out of a `Dictionary` is read into a typed local before use.
 - [ ] Static assets use `preload(...)`. Only runtime-discovered paths use `load(...)`.
 - [ ] Randomness via the global `rand*` functions, unless a separate stream is needed.
 - [ ] No `match`, inner classes, `static`, `Resource` subclasses, `Vector2i`,
       or `##` doc-comments.
 - [ ] No `@tool` unless the user approved it for that script. An approved one guards
-      every game-only function with `if Engine.is_editor_hint(): return`.
+      every game-only function with an `if Engine.is_editor_hint():` guard.
 - [ ] No `print(...)`. `printerr` for genuine errors.
 - [ ] No method called through `owner` or `get_parent()`. Typed `@export` reference to
       a real class instead, with a shared base class where a family needs one.
@@ -220,7 +254,8 @@ if [ -n "$output" ]; then echo "$output"; exit 1; fi
 - [ ] Two blank lines between functions. Comments say why, never what. No
       commented-out code.
 - [ ] Overridable base methods with a `pass` body take `_`-prefixed parameters.
-- [ ] `gdlint` run **from the project root** is clean, and a headless launch is silent.
+- [ ] `gdformat --check` and `gdlint`, run **from the project root**, are clean, a
+      headless launch is silent, and every script loads.
 
 ## Reviewing an existing file
 

@@ -14,9 +14,7 @@ func _ready() -> void:
 	time.autostart = true
 	time.one_shot = true
 	time.wait_time = LIFETIME
-	var _error: int = time.timeout.connect(func () -> void:
-		queue_free()
-	)
+	var _error: int = time.timeout.connect(func() -> void: queue_free())
 	add_child(time)
 
 

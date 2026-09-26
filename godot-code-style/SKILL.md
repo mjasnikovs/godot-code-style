@@ -15,7 +15,7 @@ description: >
 
 Verified against Godot 4.7.2 and gdtoolkit 4.5.0 by building the project in `godot/`
 and running it. Every rule below compiles under 23 warnings-as-errors with no
-suppressions, and 3808 assertions check that it stays that way.
+suppressions, and 3971 assertions check that it stays that way.
 
 One dialect. Every script in the project looks like it was written by the same person
 in the same hour. Where Godot offers two ways to do a thing, this style picks one and
@@ -53,8 +53,8 @@ Top to bottom, always:
 6. `func`
 
 ```gdscript
-enum Direction {left = -1, right = 1}
-enum State {idle, walk, jump, fall, attack, hit, death}
+enum Direction { left = -1, right = 1 }
+enum State { idle, walk, jump, fall, attack, hit, death }
 
 const blocked_states: Array[State] = [State.attack, State.hit]
 const JUMP_VELOCITY: float = -300.0
@@ -80,7 +80,7 @@ Functions come after every member. Lifecycle first (`_init`, `_ready`,
 | `const` | SCREAMING_SNAKE | `const JUMP_VELOCITY: float = -300.0` |
 | `var`, `func` | snake_case | `func set_state(state: State) -> void:` |
 | `enum` type | PascalCase | `enum State {...}` |
-| `enum` member | lowercase | `enum Direction {left = -1, right = 1}` |
+| `enum` member | lowercase | `enum Direction { left = -1, right = 1 }` |
 | `signal` | snake_case, past tense | `signal enemy_died(enemy_node: Enemy)` |
 | private member | `_` prefix | `var _spawning: bool = false` |
 
@@ -110,9 +110,10 @@ func take_damage(damage: int, direction: Direction) -> void:
 ```
 
 Void functions write `-> void`. Loop variables are typed. Lambda parameters are typed:
-`func (hitbox: HitBox) -> void:`.
+`func(hitbox: HitBox) -> void:`.
 
-Tabs, never spaces. Lines ≤ 120 characters.
+Tabs, never spaces. Lines ≤ 120 characters. `gdformat` at 120 writes the layout, so
+never format by hand (`reference/checklist.md`).
 
 ## Layout
 
@@ -179,15 +180,17 @@ default, and `assert(budget)` is false for a legitimate zero.
 
 ## Guards
 
-Guard clauses at the top, one line each.
+Guard clauses at the top. `gdformat` puts the `return` on its own line.
 
 ```gdscript
-	if !target: return
+	if !target:
+		return
 ```
 
 ```gdscript
 func set_state(state: State) -> void:
-	if blocked_states.has(c_state): return
+	if blocked_states.has(c_state):
+		return
 ```
 
 ## Every signal is emitted through a method
@@ -235,6 +238,13 @@ does not compile.
 `@warning_ignore_start` / `@warning_ignore_restore`, the Godot 3 `# warning-ignore:`
 comment, a `# gdlint:ignore=` comment, nor lowering a warning level in `project.godot`.
 
+One exception, for gdUnit4 test suites only. Their fluent asserts return values
+nobody keeps, and their `await`s are on calls typed as plain returns. So a suite
+may open with `@warning_ignore_start("return_value_discarded")` and
+`@warning_ignore_start("redundant_await")`, and nothing else file-wide. The
+`godot-gdunit4` skill has the two one-line cases it also allows. Game code gets
+none of it.
+
 A warning is the type system telling you it lost track of a value. Silencing it keeps
 the ignorance and hides it. Fix the cause instead:
 
@@ -253,12 +263,8 @@ a return you genuinely do not want gets a name and a type anyway. Declare one
 throwaway per type per scope and reuse it:
 
 ```gdscript
-	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void:
-		force_state(State.idle)
-	)
-	_error = area_entered.connect(func(hitbox: HitBox) -> void:
-		take_hit(hitbox)
-	)
+	var _error: int = animation.animation_finished.connect(func(_anim: StringName) -> void: force_state(State.idle))
+	_error = area_entered.connect(func(hitbox: HitBox) -> void: take_hit(hitbox))
 ```
 
 The type is `int`, not `Error`. `connect` is declared as returning `int`, so annotating
@@ -315,19 +321,20 @@ An approved script puts `@tool` on its own line above the declaration. Every
 game-only function opens with a guard:
 
 ```gdscript
-	if Engine.is_editor_hint(): return
+	if Engine.is_editor_hint():
+		return
 ```
 
 ## Build order
 
-1. Set the strict warnings in `project.godot` and add `.gdlintrc`
+1. Set the strict warnings in `project.godot` and add `.gdlintrc` and `.gdformatrc`
    (`reference/checklist.md`).
 2. Write line 1: `class_name X extends Y`.
 3. Lay out members in the six-block order.
 4. Annotate every declaration; add `-> void` before writing the body.
 5. Assert every `@export` node or resource reference in `_ready`.
 6. Wire signals as lambdas in `_ready`.
-7. Run `gdlint` and a headless launch; both must be silent.
+7. Run `gdformat`, then `gdlint` and a headless launch; both must be silent.
 8. Walk the checklist before committing.
 
 ## Reference
@@ -336,5 +343,5 @@ game-only function opens with a guard:
   `@export_category` grouping, the per-instance SCREAMING exception.
 - `reference/patterns.md` — the eight patterns in full, plus tweens, `await`,
   `call_deferred`, `queue_free`, randomness, `preload` vs `load`, script archetypes.
-- `reference/checklist.md` — the `project.godot` warning block, `.gdlintrc`, the
-  pre-commit checklist, and how to run the linter headless.
+- `reference/checklist.md` — the `project.godot` warning block, `.gdlintrc`,
+  `.gdformatrc`, the pre-commit checklist, and how to run the linter headless.

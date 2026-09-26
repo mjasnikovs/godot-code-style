@@ -19,5 +19,6 @@ func take_damage(damage: int, direction: Direction) -> void:
 
 func _physics_process(delta: float) -> void:
 	super(delta)
-	if knockback_buffer_time > 0: return
+	if knockback_buffer_time > 0:
+		return
 	velocity.x = SPEED * c_direction

@@ -1,7 +1,7 @@
 class_name UpgradeCard extends Control
 
-enum Background {red, blue}
-enum Icon {bow, sword}
+enum Background { red, blue }
+enum Icon { bow, sword }
 
 # Config lives in const Dictionary blobs, never a Resource subclass.
 const magnum_1: Dictionary = {

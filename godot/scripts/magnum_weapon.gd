@@ -10,7 +10,8 @@ func _setup() -> void:
 
 
 func fire() -> void:
-	if reload_time > 0: return
+	if reload_time > 0:
+		return
 	super()
 	shots_fired += 1
 	var instance: Bullet = bullet.instantiate()
